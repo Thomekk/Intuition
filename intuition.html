@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2a">
+<title>Тишина</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:#0d1b2a;color:#e0e6ed;overflow:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{text-decoration:none;color:inherit;}
+
+/* ===== Фоновые слои ===== */
+#bg-layer-light {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, #1a2530 0%, #0d1b2a 100%);
+  z-index: -2;
+}
+#bg-layer-dark {
+  position: fixed; inset: 0;
+  background: radial-gradient(circle at 50% 20%, rgba(255,220,150,0.15) 0%, transparent 60%), linear-gradient(160deg, #1a2530, #0d1b2a);
+  opacity: 0; transition: opacity 2s ease;
+  z-index: -1;
+}
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== Переключение экранов ===== */
+.view{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;padding:24px;max-width:480px;margin:0 auto;z-index:10}
+body[data-view="menu"]     .view-menu,
+body[data-view="breath"]   .view-breath,
+body[data-view="intuition"] .view-intuition,
+body[data-view="settings"] .view-settings{display:flex}
+
+/* ===== Общие кнопки ===== */
+.back-btn,.settings-btn{
+  position:absolute;top:16px;width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.1);
+  font-size:22px;font-weight:700;backdrop-filter:blur(8px);color:#e0e6ed;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s, background .3s;z-index:50;
+  cursor:pointer; user-select:none;
+}
+.back-btn{left:16px}.settings-btn{right:16px}
+.back-btn:active,.settings-btn:active{transform:scale(.92);background:rgba(255,255,255,.25)}
+
+/* ===== Меню ===== */
+.menu-title{font-size:13px;letter-spacing:.35em;text-transform:uppercase;
+  opacity:.6;margin-bottom:36px;font-weight:500}
+.menu-card{
+  width:100%;max-width:300px;padding:18px 22px;border-radius:24px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px -8px rgba(0,0,0,.3);
+  margin-bottom:14px;display:flex;align-items:center;gap:18px;
+  transition:transform .2s, background .2s;text-align:left
+}
+.menu-card:active{transform:scale(.97);background:rgba(255,255,255,.12)}
+.menu-card-icon{
+  width:48px;height:48px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#4a7c9e,#2c536b);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.2)
+}
+.menu-card[data-goto="intuition"] .menu-card-icon{
+  background:linear-gradient(135deg,#3b7a57,#1e4631)
+}
+.menu-card-label{font-size:17px;font-weight:500;margin-bottom:2px}
+.menu-card-desc{font-size:12.5px;opacity:.6}
+
+/* ===== Дыхание ===== */
+#b-level{position:absolute;top:26px;right:20px;font-size:11px;opacity:.5;
+  letter-spacing:.08em;text-transform:uppercase;font-weight:500;text-align:right}
+#b-phase{font-size:20px;font-weight:500;margin-bottom:8px;
+  height:28px;transition:opacity .3s;letter-spacing:.02em;text-align:center}
+#b-sub{font-size:14px;color:rgba(224,230,237,0.6);margin-bottom:min(6vmin,32px);
+  height:20px;transition:opacity .3s;text-align:center;letter-spacing:.02em}
+#b-circle{
+  width:min(68vmin,380px);height:min(68vmin,380px);border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#4a7c9e 0%,#2c536b 60%,#1a3648 100%);
+  box-shadow:
+    0 20px 60px -10px rgba(0,0,0,.6),
+    inset 0 -8px 24px rgba(0,0,0,.2),
+    inset 0 8px 24px rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  transform:scale(.55);will-change:transform;transition:transform 4s linear;
+  position:relative;
+}
+.b-ring {
+  position:absolute;inset:0;width:100%;height:100%;
+  transform:rotate(-90deg);pointer-events:none;
+}
+.b-ring-bg { fill:none; stroke:rgba(255,255,255,0.1); stroke-width:4; }
+.b-ring-fg { fill:none; stroke:#fff; stroke-width:4; stroke-linecap:round;
+  stroke-dasharray:289; stroke-dashoffset:289; will-change: stroke-dashoffset; }
+
+.b-controls{
+  margin-top:min(8vmin,44px);display:flex;gap:12px;transition:opacity .35s;
+}
+.b-controls.hidden{opacity:0;pointer-events:none;position:absolute;}
+#b-start-energy, #b-start-calm, #b-stop{
+  padding:14px 24px;border-radius:32px;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.1);
+  color:#e0e6ed;font-size:15px;font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+  backdrop-filter:blur(8px);transition:transform .2s,opacity .35s
+}
+#b-start-energy:active, #b-start-calm:active, #b-stop:active{transform:scale(.96)}
+#b-stop { border-color: rgba(255,123,123,0.3); color: #ffaaaa; margin-top:min(8vmin,44px); }
+#b-stop.hidden { display: none; }
+
+/* ===== Интуиция ===== */
+#i-grid{
+  display:grid;gap:12px;width:100%;max-width:340px;margin-top:24px;
+  transition:opacity .3s; pointer-events: auto;
+}
+#i-grid[data-count="2"]{grid-template-columns:repeat(2,1fr)}
+#i-grid[data-count="3"]{grid-template-columns:repeat(3,1fr)}
+#i-grid[data-count="4"]{grid-template-columns:repeat(2,1fr)}
+#i-grid[data-count="5"],
+#i-grid[data-count="6"],
+#i-grid[data-count="7"],
+#i-grid[data-count="8"],
+#i-grid[data-count="9"]{grid-template-columns:repeat(3,1fr)}
+.card{
+  aspect-ratio:1;border-radius:16px;position:relative;overflow:hidden;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  cursor:pointer;
+  transition:transform .15s,background .35s,box-shadow .35s
+}
+.card::after{
+  content:'?';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(40px,12vmin,64px);
+  color:rgba(255,255,255,0.12);
+  font-weight:800;
+  pointer-events:none;
+}
+.card:active{transform:scale(.94)}
+.card-inner{
+  position:absolute;inset:0;border-radius:inherit;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(36px,11vmin,52px);font-weight:600;color:#fff;
+  opacity:0;transition:opacity .3s;background:transparent;
+  pointer-events:none;
+}
+
+/* Анимации ответов */
+.card.correct{
+  background:linear-gradient(135deg,#3b7a57,#1e4631);
+  border-color: #7fce9a;
+  box-shadow:0 0 20px rgba(127, 206, 154, 0.4);
+  animation:pulseForward .5s ease
+}
+.card.correct::after{display:none}
+.card.correct .card-inner{opacity:1}
+
+.card.wrong { animation:pulseBackward .5s ease; }
+
+.card.reveal {
+  background: rgba(255, 235, 200, 0.1);
+  border-color: rgba(255, 235, 200, 0.3);
+  box-shadow: 0 0 15px rgba(255, 235, 200, 0.15);
+  animation: pulseBackward .5s ease;
+}
+.card.reveal::after { display:none; }
+.card.reveal .card-inner { opacity: 0.7; }
+
+@keyframes pulseForward{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes pulseBackward{0%,100%{transform:scale(1)}50%{transform:scale(0.95)}}
+
+#i-target-wrap{margin-top:26px;display:flex;flex-direction:column;
+  align-items:center;gap:10px}
+.target-label{font-size:11px;color:rgba(224,230,237,.5);
+  letter-spacing:.15em;text-transform:uppercase;transition:color .3s}
+#i-target{
+  width:80px;height:80px;border-radius:20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow:0 8px 24px -6px rgba(0,0,0,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(36px,11vmin,52px);font-weight:600;color:#fff;
+  transition:opacity .3s, background .3s, color .3s, box-shadow .3s;
+  overflow:hidden;
+}
+#i-target .target-dot{
+  width:100%;height:100%;border-radius:inherit;
+  display:flex;align-items:center;justify-content:center;
+  transition:box-shadow .3s;
+  pointer-events:none;
+}
+
+/* ===== Настройки ===== */
+.view-settings h2{font-size:19px;font-weight:500;margin-bottom:28px;letter-spacing:.02em}
+.settings-section{width:100%;max-width:340px;margin-bottom:22px}
+.settings-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;
+  opacity:.6;margin-bottom:10px;font-weight:500}
+
+.mode-list { display: flex; flex-direction: column; gap: 8px; }
+.mode-option {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  padding: 10px 14px; background: rgba(255,255,255,0.08);
+  border-radius: 12px; font-size: 14px; border: 1px solid rgba(255,255,255,0.1);
+  transition: background 0.2s;
+}
+.mode-option .check-box {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.mode-option.active .check-box {
+  background: #4a7c9e; border-color: #4a7c9e;
+}
+.mode-option.active .check-box::after {
+  content: ''; width: 5px; height: 9px;
+  border: solid white; border-width: 0 2px 2px 0;
+  transform: rotate(45deg); margin-bottom: 2px;
+}
+
+.sound-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius:16px; margin-bottom:10px;
+}
+.sound-row span{font-size:13.5px}
+.toggle{
+  padding:6px 16px;border-radius:14px;background:rgba(0,0,0,.3);
+  font-size:13px;transition:background .2s, color .2s
+}
+.toggle.on{background:linear-gradient(135deg,#4a7c9e,#2c536b);color:#fff}
+
+.support-links { display: flex; flex-direction: column; gap: 10px; }
+.support-btn {
+  display: block; text-align: center; padding: 12px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px; font-size: 14px; font-weight: 500;
+  transition: background .2s, transform .2s;
+}
+.support-btn:active { transform: scale(.98); background: rgba(255,255,255,.15); }
+.support-btn.secondary { color: #9ab4c9; font-size: 13px; padding: 10px; }
+
+@media (max-height:640px){
+  .menu-title{margin-bottom:22px}
+  #b-phase{margin-bottom:4px}
+  #b-sub{margin-bottom:16px}
+  #i-target-wrap{margin-top:16px}
+}
+</style>
+</head>
+<body data-view="menu">
+
+<div id="bg-layer-light"></div>
+<div id="bg-layer-dark"></div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- ===== МЕНЮ ===== -->
+<section class="view view-menu">
+  <button class="settings-btn" data-goto="settings" aria-label="Настройки">⚙</button>
+  <div class="menu-title">Тишина</div>
+  <button class="menu-card" data-goto="breath">
+    <div class="menu-card-icon">◯</div>
+    <div>
+      <div class="menu-card-label">Дыхание</div>
+      <div class="menu-card-desc">Подготовка</div>
+    </div>
+  </button>
+  <button class="menu-card" data-goto="intuition">
+    <div class="menu-card-icon">●</div>
+    <div>
+      <div class="menu-card-label">Интуиция</div>
+      <div class="menu-card-desc">Тренировка</div>
+    </div>
+  </button>
+</section>
+
+<!-- ===== ДЫХАНИЕ ===== -->
+<section class="view view-breath">
+  <button class="back-btn" data-goto="menu" aria-label="Назад">←</button>
+  <div id="b-level"></div>
+  <div id="b-phase">Готовы?</div>
+  <div id="b-sub">Выберите режим дыхания</div>
+  <div id="b-circle">
+    <svg class="b-ring" viewBox="0 0 100 100">
+      <circle class="b-ring-bg" cx="50" cy="50" r="46" />
+      <circle id="b-progress" class="b-ring-fg" cx="50" cy="50" r="46" />
+    </svg>
+  </div>
+  
+  <div class="b-controls" id="b-controls-start">
+    <button id="b-start-energy">Энергия</button>
+    <button id="b-start-calm">Расслабление</button>
+  </div>
+  <button id="b-stop" class="hidden">Остановить</button>
+</section>
+
+<!-- ===== ИНТУИЦИЯ ===== -->
+<section class="view view-intuition">
+  <button class="back-btn" data-goto="menu" aria-label="Назад">←</button>
+  <div id="i-grid"></div>
+  <div id="i-target-wrap">
+    <div class="target-label">Найдите</div>
+    <div id="i-target"></div>
+  </div>
+</section>
+
+<!-- ===== НАСТРОЙКИ ===== -->
+<section class="view view-settings">
+  <button class="back-btn" data-goto="menu" aria-label="Назад">←</button>
+  <h2>Настройки</h2>
+  
+  <div class="settings-section">
+    <div class="settings-label">Что отгадывать</div>
+    <div id="mode-list" class="mode-list"></div>
+  </div>
+  
+  <div class="settings-section">
+    <div class="settings-label">Оформление и звук</div>
+    <div class="sound-row">
+      <span>Менять фон при верном ответе</span>
+      <button id="bg-toggle" class="toggle">вкл</button>
+    </div>
+    <div class="sound-row">
+      <span>Мягкий звук при верном ответе</span>
+      <button id="sound-toggle" class="toggle">вкл</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">Поддержка</div>
+    <div class="support-links">
+      <a href="https://dalink.to/tomvazovsky" target="_blank" class="support-btn">Поддержать проект</a>
+      <a href="" target="_blank" class="support-btn secondary">Открытый исходный код (GitHub)</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ======================== КОНСТАНТЫ ======================== */
+  const POOLS = {
+    colors:  ['#a8d8ea','#ffc8dd','#bde0fe','#caffbf','#ffd6a5',
+              '#fdffb6','#bdb2ff','#ffc6ff','#a0c4ff'],
+    symbols: ['★','●','◆','♥','☀','☾','✿','✦','✚'],
+    digits:  ['1','2','3','4','5','6','7','8','9'],
+    letters: ['А','Б','В','Г','Д','Е','Ж','З','И'],
+    images:  ['🌸','🌙','⭐','🍃','🔥','💧','🌊','☁️','🌈']
+  };
+  const MODE_LABELS = {
+    colors:'Цвета', symbols:'Символы', digits:'Цифры',
+    letters:'Буквы', images:'Образы'
+  };
+  
+  const BREATH_STAGES_ENERGY = [
+    { type: 'prepare', label: 'Приготовьтесь', duration: 5 },
+    { type: 'cycles', label: 'Разминка', cycles: 5, inhale: 4, exhale: 4 },
+    { type: 'hold_exhale', label: 'Задержка', duration: 15 },
+    { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
+    { type: 'recovery', label: 'Отдых', duration: 15 },
+    { type: 'cycles', label: 'Дыхание', cycles: 5, inhale: 4, exhale: 4 },
+    { type: 'hold_exhale', label: 'Задержка', duration: 20 },
+    { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
+    { type: 'recovery', label: 'Отдых', duration: 15 },
+    { type: 'cycles', label: 'Дыхание', cycles: 5, inhale: 4, exhale: 4 },
+    { type: 'hold_exhale', label: 'Задержка', duration: 25 },
+    { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
+    { type: 'recovery', label: 'Восстановление', duration: 20 }
+  ];
+
+  const BREATH_STAGES_CALM = [
+    { type: 'cycles', label: 'Медитация', cycles: 100, inhale: 4, exhale: 6 }
+  ];
+
+  const PHRASES = {
+    exhale15: ['Расслабьтесь...', 'Не напрягайтесь...', 'Слушайте тишину...', 'Покой...'],
+    exhale20: ['Доверьтесь телу...', 'Время остановилось...', 'Момент тишины...', 'Расслабление...'],
+    exhale25: ['Вы в безопасности...', 'Просто наблюдайте...', 'Просто будьте...', 'Тишина внутри...'],
+    inhale:   ['Смотрите вдаль...', 'Сохраняйте фокус...', 'Еще немного...', 'Спокойствие...', 'Тишина...']
+  };
+
+  const SETTINGS_KEY = 'ts_settings_v1';
+  const SESSION_KEY = 'ts_session_v1';
+
+  /* ======================== УТИЛИТЫ ======================== */
+  const $  = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const shuffle = a => {
+    for (let i = a.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  /* ======================== ССЫЛКИ DOM ======================== */
+  const gridEl      = $('i-grid');
+  const targetEl    = $('i-target');
+  const modeListEl  = $('mode-list');
+  const soundToggle = $('sound-toggle');
+  const bgToggle    = $('bg-toggle');
+  const bCircle     = $('b-circle');
+  const bProgress   = $('b-progress');
+  const bPhase      = $('b-phase');
+  const bSub        = $('b-sub');
+  const bLevel      = $('b-level');
+  const bCtrlStart  = $('b-controls-start');
+  const bStop       = $('b-stop');
+
+  /* ======================== СОСТОЯНИЕ ======================== */
+  let game = {
+    enabledModes: Object.keys(POOLS), // По умолчанию включены все типы
+    cards:2,
+    rightCount:0, wrongCount:0,
+    lastResults:[], cooldown:0,
+    soundOn:true,
+    bgChangeOnCorrect:true,
+    skillStats: {
+      colors: {wins: 0, total: 0},
+      symbols: {wins: 0, total: 0},
+      digits: {wins: 0, total: 0},
+      letters: {wins: 0, total: 0},
+      images: {wins: 0, total: 0}
+    }
+  };
+  const session = { active:false, correctIndex:-1, items:[], currentMode:'colors', abortId:0 };
+  let breathAbort = 0;
+  let currentView = 'menu';
+
+  /* ======================== ХРАНИЛИЩЕ ======================== */
+  function loadGame(){
+    // 1. Настройки (навсегда)
+    try{
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      if(s) {
+        if(Array.isArray(s.enabledModes)) game.enabledModes = s.enabledModes;
+        if(typeof s.soundOn === 'boolean') game.soundOn = s.soundOn;
+        if(typeof s.bgChangeOnCorrect === 'boolean') game.bgChangeOnCorrect = s.bgChangeOnCorrect;
+      }
+    }catch(e){}
+
+    // Страховка: если вдруг enabledModes пуст
+    if (game.enabledModes.length === 0) game.enabledModes = Object.keys(POOLS);
+
+    // 2. Прогресс (сессия)
+    try{
+      const d = JSON.parse(sessionStorage.getItem(SESSION_KEY));
+      if(d) {
+        if(typeof d.cards === 'number' && d.cards >= 2 && d.cards <= 9) game.cards = d.cards;
+        if(typeof d.rightCount === 'number') game.rightCount = d.rightCount;
+        if(typeof d.wrongCount === 'number') game.wrongCount = d.wrongCount;
+        if(Array.isArray(d.lastResults)) game.lastResults = d.lastResults.slice(-6);
+        if(typeof d.cooldown === 'number') game.cooldown = d.cooldown;
+        if(d.skillStats) {
+          for (let m in d.skillStats) {
+            if (game.skillStats[m]) game.skillStats[m] = d.skillStats[m];
+          }
+        }
+      }
+    }catch(e){}
+  }
+
+  function saveSettings(){
+    try{
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        enabledModes: game.enabledModes,
+        soundOn: game.soundOn,
+        bgChangeOnCorrect: game.bgChangeOnCorrect
+      }));
+    }catch(e){}
+  }
+
+  function saveGame(){
+    try{
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        cards: game.cards,
+        rightCount: game.rightCount, wrongCount: game.wrongCount,
+        lastResults: game.lastResults, cooldown: game.cooldown,
+        skillStats: game.skillStats
+      }));
+    }catch(e){}
+  }
+
+  /* ======================== НАВИГАЦИЯ ======================== */
+  function goTo(view){
+    if(view === currentView) return;
+    if(currentView === 'breath')    stopBreathing();
+    if(currentView === 'intuition') exitIntuition();
+    
+    currentView = view;
+    document.body.dataset.view = view;
+    
+    if(view === 'breath')    enterBreathing();
+    if(view === 'intuition') enterIntuition();
+    if(view === 'settings')  renderSettings();
+  }
+  
+  document.body.addEventListener('click', e => {
+    const t = e.target.closest('[data-goto]');
+    if(t) goTo(t.dataset.goto);
+  });
+
+  /* ======================== ДЫХАНИЕ ======================== */
+  function resetBreathingUI(){
+    bCircle.style.transition = 'transform .6s ease';
+    bCircle.style.transform  = 'scale(.55)';
+    bProgress.style.transition = 'none';
+    bProgress.style.strokeDashoffset = 289;
+    
+    bPhase.textContent = 'Готовы?';
+    bSub.textContent = 'Выберите режим дыхания';
+    bPhase.style.opacity = 1;
+    bSub.style.opacity = 1;
+    bLevel.textContent = '';
+    
+    bCtrlStart.classList.remove('hidden');
+    bStop.classList.add('hidden');
+    
+    bg.targetDark = 1;
+  }
+  
+  function enterBreathing(){ resetBreathingUI(); }
+  
+  function stopBreathing(){
+    breathAbort++;
+    resetBreathingUI();
+  }
+
+  function setScale(scale, dur){
+    bCircle.style.transition = `transform ${dur}s linear`;
+    requestAnimationFrame(() => { bCircle.style.transform = `scale(${scale})`; });
+  }
+
+  // ringMode: 'fill' (289->0), 'drain' (0->-289), 'hold_full' (0->0), 'hold_empty' (289->289)
+  function runCountdown(label, sec, id, scaleFn, phrases = [], ringMode = 'fill') {
+    return new Promise(resolve => {
+      if (id !== breathAbort) return resolve();
+      
+      bPhase.style.opacity = 0;
+      bSub.style.opacity = 0;
+      
+      setTimeout(() => {
+        if (id !== breathAbort) return resolve();
+        bPhase.textContent = label;
+        bPhase.style.opacity = 1;
+
+        const phraseArr = Array.isArray(phrases) ? phrases : (phrases ? [phrases] : []);
+        let phraseIdx = 0;
+        if (phraseArr.length > 0) {
+          bSub.textContent = phraseArr[0];
+          bSub.style.opacity = 1;
+        } else {
+          bSub.textContent = '';
+        }
+
+        if (scaleFn) scaleFn(sec);
+
+        const start = performance.now();
+        const end = start + sec * 1000;
+        let lastPhraseUpdate = start;
+        
+        let startOffset = 289;
+        let endOffset = 0;
+        
+        if (ringMode === 'fill') {
+          startOffset = 289; endOffset = 0;
+        } else if (ringMode === 'drain') {
+          startOffset = 0; endOffset = -289;
+        } else if (ringMode === 'hold_full') {
+          startOffset = 0; endOffset = 0;
+        } else if (ringMode === 'hold_empty') {
+          startOffset = 289; endOffset = 289;
+        }
+        
+        bProgress.style.transition = 'none';
+        bProgress.style.strokeDashoffset = startOffset;
+
+        function frame(now) {
+          if (id !== breathAbort) return resolve();
+          
+          const elapsed = now - start;
+          const progress = Math.min(1, elapsed / (sec * 1000));
+          
+          const currentOffset = startOffset + (endOffset - startOffset) * progress;
+          bProgress.style.strokeDashoffset = currentOffset;
+
+          if (phraseArr.length > 1 && now - lastPhraseUpdate > 6000) {
+            phraseIdx = (phraseIdx + 1) % phraseArr.length;
+            bSub.style.opacity = 0;
+            setTimeout(() => {
+              if (id !== breathAbort) return;
+              bSub.textContent = phraseArr[phraseIdx];
+              bSub.style.opacity = 1;
+            }, 300);
+            lastPhraseUpdate = now;
+          }
+
+          if (now < end) {
+            requestAnimationFrame(frame);
+          } else {
+            resolve();
+          }
+        }
+        
+        requestAnimationFrame(frame);
+      }, 60);
+    });
+  }
+
+  async function runStage(stage, id) {
+    if (id !== breathAbort) return;
+
+    if (stage.type === 'prepare' || stage.type === 'recovery') {
+      await runCountdown(stage.label, stage.duration, id, (sec) => {
+        if (stage.type === 'prepare') setScale(.55, 0.5);
+      }, stage.type === 'prepare' ? 'Дышите ровно и глубоко' : 'Медленно вернитесь к обычному дыханию', 'hold_empty');
+    } 
+    
+    else if (stage.type === 'cycles') {
+      bLevel.textContent = stage.label;
+      for (let i = 0; i < stage.cycles; i++) {
+        if (id !== breathAbort) return;
+        await runCountdown('Вдох', stage.inhale, id, (sec) => setScale(1, sec), 'Наполнитесь воздухом', 'fill');
+        if (id !== breathAbort) return;
+        await runCountdown('Выдох', stage.exhale, id, (sec) => setScale(.55, sec), 'Отпустите всё', 'drain');
+      }
+    } 
+    
+    else if (stage.type === 'hold_exhale') {
+      bLevel.textContent = stage.label;
+      bg.mode = 'glints';
+      
+      await runCountdown('Выдох', 4, id, (sec) => setScale(.55, sec), 'Плавный выдох', 'drain');
+      if (id !== breathAbort) return;
+      
+      let phrases = PHRASES.exhale15;
+      if (stage.duration >= 20) phrases = PHRASES.exhale20;
+      if (stage.duration >= 25) phrases = PHRASES.exhale25;
+      
+      await runCountdown('Не дышите', stage.duration, id, (sec) => setScale(.55, 0.5), phrases, 'hold_empty');
+    } 
+    
+    else if (stage.type === 'inhale_hold') {
+      bLevel.textContent = stage.label;
+      
+      await runCountdown('Вдох', stage.inhale, id, (sec) => setScale(1, sec), 'Максимально глубоко', 'fill');
+      if (id !== breathAbort) return;
+      
+      bg.mode = 'stars';
+      await runCountdown('Задержите', stage.hold, id, (sec) => setScale(1, 0.5), PHRASES.inhale, 'hold_full');
+    }
+  }
+
+  async function runBreathing(stages){
+    const id = ++breathAbort;
+    bCtrlStart.classList.add('hidden');
+    bStop.classList.remove('hidden');
+    
+    for (let i = 0; i < stages.length; i++) {
+      if (id !== breathAbort) return;
+      if (stages.length > 1) bLevel.textContent = `Шаг ${i + 1} из ${stages.length}`;
+      await runStage(stages[i], id);
+    }
+    
+    if (id !== breathAbort) return;
+    bPhase.textContent = 'Готово';
+    bSub.textContent = 'Вы отлично справились';
+    bLevel.textContent = '';
+    bProgress.style.transition = 'stroke-dashoffset .5s ease';
+    bProgress.style.strokeDashoffset = 289;
+    bCircle.style.transition = 'transform .8s ease';
+    bCircle.style.transform  = 'scale(.55)';
+    
+    bCtrlStart.classList.remove('hidden');
+    bStop.classList.add('hidden');
+    bg.mode = 'bubbles';
+  }
+
+  $('b-start-energy').addEventListener('click', async () => {
+    if(bCtrlStart.classList.contains('hidden')) return;
+    bCtrlStart.classList.add('hidden');
+    bPhase.textContent = 'Приготовьтесь';
+    bSub.textContent = 'Энергия';
+    await sleep(800);
+    if(currentView !== 'breath') return;
+    runBreathing(BREATH_STAGES_ENERGY);
+  });
+
+  $('b-start-calm').addEventListener('click', async () => {
+    if(bCtrlStart.classList.contains('hidden')) return;
+    bCtrlStart.classList.add('hidden');
+    bPhase.textContent = 'Приготовьтесь';
+    bSub.textContent = 'Расслабление';
+    await sleep(800);
+    if(currentView !== 'breath') return;
+    runBreathing(BREATH_STAGES_CALM);
+  });
+
+  bStop.addEventListener('click', () => {
+    stopBreathing();
+  });
+
+  /* ======================== ЗВУК ======================== */
+  let audioCtx;
+  function playSuccess(){
+    if(!game.soundOn) return;
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + .15);
+      gain.gain.setValueAtTime(.12, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + .4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + .4);
+    }catch(e){}
+  }
+
+  /* ======================== ИНТУИЦИЯ ======================== */
+  function enterIntuition() {
+    bg.mode = 'stars';
+    startRound();
+  }
+  function exitIntuition() {
+    session.abortId++;
+    session.active = false;
+  }
+
+  function renderTarget(item, mode){
+    targetEl.innerHTML = '';
+    if(mode === 'colors'){
+      targetEl.style.background = item;
+      targetEl.style.color = '#fff';
+      targetEl.style.border = 'none';
+    } else {
+      targetEl.style.background = 'rgba(255,255,255,0.08)';
+      targetEl.style.color = '#fff';
+      targetEl.style.border = '1px solid rgba(255,255,255,0.15)';
+      targetEl.textContent = item;
+    }
+  }
+
+  function renderCardContent(card, item, mode){
+    const inner = card.querySelector('.card-inner');
+    if(!inner) return;
+    if(mode === 'colors'){
+      inner.style.background = item;
+      inner.textContent = '';
+    } else {
+      inner.style.background = 'transparent';
+      inner.textContent = item;
+    }
+  }
+
+  function startRound(){
+    session.abortId++;
+    
+    targetEl.style.background = 'rgba(255,255,255,0.08)';
+    targetEl.textContent = '';
+    targetEl.style.color = '#fff';
+
+    // 1. Определяем, какие типы открыты согласно текущему уровню (количеству карточек)
+    let unlockedModes = ['colors'];
+    if (game.cards >= 3) unlockedModes.push('symbols');
+    if (game.cards >= 5) unlockedModes.push('digits');
+    if (game.cards >= 7) unlockedModes.push('letters', 'images');
+
+    // 2. Фильтруем их по галочкам в настройках пользователя
+    let activeModes = unlockedModes.filter(m => game.enabledModes.includes(m));
+    
+    // На всякий случай: если ничего не осталось, принудительно берем цвета
+    if (activeModes.length === 0) activeModes = ['colors'];
+
+    // 3. Считаем веса на основе навыка
+    let totalWeight = 0;
+    const weights = [];
+    activeModes.forEach(m => {
+      const stat = game.skillStats[m];
+      const rating = stat.total > 0 ? (stat.wins / stat.total) * 100 : 50;
+      const w = rating + 20; // Базовая фора
+      weights.push({ mode: m, w });
+      totalWeight += w;
+    });
+    
+    // 4. Выбираем тип по весам
+    let rand = Math.random() * totalWeight;
+    let selectedMode = activeModes[0];
+    for (const item of weights) {
+      rand -= item.w;
+      if (rand <= 0) { selectedMode = item.mode; break; }
+    }
+
+    session.currentMode = selectedMode;
+
+    // 5. Генерируем карточки
+    const pool = POOLS[selectedMode].slice();
+    shuffle(pool);
+    const items = pool.slice(0, game.cards);
+    const targetIdx = Math.floor(Math.random() * items.length);
+    session.items = items;
+    session.correctIndex = targetIdx;
+    session.active = true;
+
+    renderTarget(items[targetIdx], selectedMode);
+
+    gridEl.innerHTML = '';
+    gridEl.dataset.count = items.length;
+    gridEl.style.pointerEvents = 'auto';
+    
+    items.forEach((_, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = i;
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+      card.appendChild(inner);
+      gridEl.appendChild(card);
+    });
+  }
+
+  gridEl.addEventListener('click', e => {
+    const card = e.target.closest('.card');
+    if(!card) return;
+    handleCardClick(+card.dataset.index);
+  });
+
+  async function handleCardClick(index){
+    if(!session.active) return;
+    session.active = false;
+    gridEl.style.pointerEvents = 'none';
+    
+    const id = session.abortId;
+    const correct = index === session.correctIndex;
+    const card = gridEl.children[index];
+    const currentMode = session.currentMode;
+
+    game.skillStats[currentMode].total++;
+
+    if(correct){
+      game.rightCount++;
+      game.skillStats[currentMode].wins++;
+      card.classList.add('correct');
+      renderCardContent(card, session.items[index], currentMode);
+      playSuccess();
+      
+      if (game.bgChangeOnCorrect) {
+        const bgModes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy'];
+        let nextIdx = (bgModes.indexOf(bg.mode) + 1) % bgModes.length;
+        bg.mode = bgModes[nextIdx];
+      }
+    } else {
+      game.wrongCount++;
+      card.classList.add('wrong');
+      
+      const correctCard = gridEl.children[session.correctIndex];
+      setTimeout(() => {
+        if (id !== session.abortId) return;
+        correctCard.classList.add('reveal');
+        renderCardContent(correctCard, session.items[session.correctIndex], currentMode);
+      }, 300);
+    }
+
+    game.lastResults.push(correct ? 1 : 0);
+    if(game.lastResults.length > 6) game.lastResults.shift();
+    saveGame();
+
+    await sleep(correct ? 800 : 1200);
+    if(id !== session.abortId) return;
+
+    gridEl.style.opacity   = '0';
+    targetEl.style.opacity = '0';
+    await sleep(320);
+    if(id !== session.abortId) return;
+
+    adaptDifficulty();
+
+    startRound();
+    void gridEl.offsetHeight;
+    gridEl.style.opacity   = '1';
+    targetEl.style.opacity = '1';
+  }
+
+  function adaptDifficulty(){
+    if(game.cooldown > 0){ game.cooldown--; saveGame(); return; }
+    if(game.lastResults.length < 6) return;
+
+    const sum = game.lastResults.reduce((a,b) => a+b, 0);
+    if(sum >= 5 && game.cards < 9){
+      game.cards++;
+      game.cooldown = 3;
+      saveGame();
+    } else if(sum <= 2 && game.cards > 2){
+      game.cards--;
+      game.cooldown = 3;
+      saveGame();
+    }
+  }
+
+  /* ======================== НАСТРОЙКИ ======================== */
+  function renderSettings(){
+    modeListEl.innerHTML = '';
+    Object.keys(POOLS).forEach(mode => {
+      const isEnabled = game.enabledModes.includes(mode);
+      
+      const label = document.createElement('div');
+      label.className = 'mode-option' + (isEnabled ? ' active' : '');
+      
+      const checkBoxDiv = document.createElement('div');
+      checkBoxDiv.className = 'check-box';
+      
+      label.appendChild(checkBoxDiv);
+      label.appendChild(document.createTextNode(MODE_LABELS[mode]));
+      
+      label.addEventListener('click', () => {
+        if (isEnabled) {
+          if (game.enabledModes.length > 1) {
+            game.enabledModes = game.enabledModes.filter(m => m !== mode);
+          } else {
+            return; // Нельзя снять последнюю галочку
+          }
+        } else {
+          game.enabledModes.push(mode);
+        }
+        
+        saveSettings();
+        renderSettings();
+      });
+      
+      modeListEl.appendChild(label);
+    });
+
+    soundToggle.textContent = game.soundOn ? 'вкл' : 'выкл';
+    soundToggle.classList.toggle('on', game.soundOn);
+    
+    bgToggle.textContent = game.bgChangeOnCorrect ? 'вкл' : 'выкл';
+    bgToggle.classList.toggle('on', game.bgChangeOnCorrect);
+  }
+
+  soundToggle.addEventListener('click', () => {
+    game.soundOn = !game.soundOn;
+    saveSettings();
+    renderSettings();
+  });
+  
+  bgToggle.addEventListener('click', () => {
+    game.bgChangeOnCorrect = !game.bgChangeOnCorrect;
+    saveSettings();
+    renderSettings();
+  });
+
+  /* ======================== CANVAS ФОН ======================== */
+  const canvas = $('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    initParticles();
+  }
+  window.addEventListener('resize', resize);
+
+  const bg = {
+    targetDark: 1,
+    currentDark: 1,
+    mode: 'stars',
+    particles: [],
+    t: 0
+  };
+
+  const darkLayer = $('bg-layer-dark');
+
+  function initParticles() {
+    bg.particles = [];
+    const count = 80;
+    for (let i = 0; i < count; i++) {
+      bg.particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        size: Math.random() * 3 + 1,
+        phase: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.5 + 0.5,
+        life: Math.random()
+      });
+    }
+  }
+
+  function draw() {
+    bg.t += 0.015;
+    bg.currentDark += (bg.targetDark - bg.currentDark) * 0.03;
+    darkLayer.style.opacity = bg.currentDark;
+    
+    ctx.clearRect(0, 0, W, H);
+    
+    bg.particles.forEach(p => {
+      if (bg.mode === 'wind') {
+        p.x += 3 + Math.sin(bg.t + p.phase) * 2;
+        p.y += Math.cos(bg.t + p.phase) * 1.5;
+        if (p.x > W + 50) { p.x = -50; p.y = Math.random() * H; }
+        ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - 40, p.y);
+        ctx.stroke();
+      } 
+      else if (bg.mode === 'glints') {
+        p.y -= 0.5 * p.speed;
+        p.x += Math.sin(bg.t * 2 + p.phase) * 0.5;
+        if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
+        const alpha = 0.2 + Math.sin(bg.t * 4 + p.phase) * 0.2;
+        ctx.fillStyle = `rgba(255, 230, 180, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'stars') {
+        p.x += p.vx * 0.1;
+        p.y += p.vy * 0.1;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        const alpha = 0.3 + Math.sin(bg.t * 2 + p.phase) * 0.4;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'bubbles') {
+        p.y -= 1 * p.speed;
+        p.x += Math.sin(bg.t + p.phase) * 0.8;
+        if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
+        ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      else if (bg.mode === 'aurora') {
+        p.y -= 0.2 * p.speed;
+        p.x += Math.sin(bg.t * 0.5 + p.phase) * 1.5;
+        if (p.y < -100) { p.y = H + 100; p.x = Math.random() * W; }
+        const alpha = 0.05 + Math.sin(bg.t + p.phase) * 0.05;
+        ctx.fillStyle = `rgba(100, 255, 200, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'leaves') {
+        p.x += Math.sin(bg.t + p.phase) * 0.5;
+        p.y += 0.5 * p.speed;
+        if (p.y > H + 50) { p.y = -50; p.x = Math.random() * W; }
+        ctx.fillStyle = `rgba(180, 220, 180, 0.15)`;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.size * 2, p.size, bg.t, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'fireflies') {
+        p.x += Math.sin(bg.t * p.speed + p.phase) * 0.5;
+        p.y += Math.cos(bg.t * p.speed + p.phase) * 0.5;
+        const alpha = 0.5 + Math.sin(bg.t * 3 + p.phase) * 0.5;
+        ctx.fillStyle = `rgba(255, 255, 150, ${alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'snow') {
+        p.y += 0.5 * p.speed;
+        p.x += Math.sin(bg.t + p.phase) * 0.3;
+        if (p.y > H + 50) { p.y = -50; p.x = Math.random() * W; }
+        const alpha = 0.4 + Math.sin(bg.t + p.phase) * 0.3;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (bg.mode === 'ripples') {
+        p.life -= 0.005 * p.speed;
+        if (p.life <= 0) {
+          p.life = 1;
+          p.x = Math.random() * W;
+          p.y = Math.random() * H;
+        }
+        const radius = (1 - p.life) * 150;
+        ctx.strokeStyle = `rgba(150, 200, 255, ${p.life * 0.15})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      else if (bg.mode === 'galaxy') {
+        p.x += Math.cos(bg.t * 0.5 + p.phase) * 0.5;
+        p.y += Math.sin(bg.t * 0.5 + p.phase) * 0.5;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        const alpha = 0.2 + Math.sin(bg.t + p.phase) * 0.2;
+        ctx.fillStyle = `rgba(200, 200, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    
+    requestAnimationFrame(draw);
+  }
+
+  /* ======================== СТАРТ ======================== */
+  loadGame();
+  resize();
+  draw();
+  document.body.dataset.view = 'menu';
+})();
+</script>
+</body>
+</html>
