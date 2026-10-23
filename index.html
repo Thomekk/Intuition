@@ -29,12 +29,13 @@ a{text-decoration:none;color:inherit;}
 }
 #bg-canvas {
   position: fixed; inset: 0; z-index: 0;
-  pointer-events: none;
+  pointer-events: auto; /* Enable clicks for interaction */
 }
 
 /* ===== Переключение экранов ===== */
 .view{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
-  justify-content:center;padding:24px;max-width:480px;margin:0 auto;z-index:10}
+  justify-content:center;padding:24px;max-width:480px;margin:0 auto;z-index:10;pointer-events:none;}
+.view > * { pointer-events: auto; }
 body[data-view="menu"]     .view-menu,
 body[data-view="breath"]   .view-breath,
 body[data-view="intuition"] .view-intuition,
@@ -53,8 +54,6 @@ body[data-view="settings"] .view-settings{display:flex}
 .back-btn:active,.settings-btn:active{transform:scale(.92);background:rgba(255,255,255,.25)}
 
 /* ===== Меню ===== */
-.menu-title{font-size:13px;letter-spacing:.35em;text-transform:uppercase;
-  opacity:.6;margin-bottom:36px;font-weight:500}
 .menu-card{
   width:100%;max-width:300px;padding:18px 22px;border-radius:24px;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
@@ -91,7 +90,7 @@ body[data-view="settings"] .view-settings{display:flex}
     inset 0 -8px 24px rgba(0,0,0,.2),
     inset 0 8px 24px rgba(255,255,255,.1);
   display:flex;align-items:center;justify-content:center;
-  transform:scale(.55);will-change:transform;transition:transform 4s linear;
+  transform:scale(.55);will-change:transform;transition:transform 4s ease-in-out;
   position:relative;
 }
 .b-ring {
@@ -102,20 +101,41 @@ body[data-view="settings"] .view-settings{display:flex}
 .b-ring-fg { fill:none; stroke:#fff; stroke-width:4; stroke-linecap:round;
   stroke-dasharray:289; stroke-dashoffset:289; will-change: stroke-dashoffset; }
 
-.b-controls{
-  margin-top:min(8vmin,44px);display:flex;gap:12px;transition:opacity .35s;
+.b-controls {
+  position: relative;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: min(8vmin, 44px);
+  width: 100%;
 }
-.b-controls.hidden{opacity:0;pointer-events:none;position:absolute;}
-#b-start-energy, #b-start-calm, #b-stop{
-  padding:14px 24px;border-radius:32px;
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.1);
-  color:#e0e6ed;font-size:15px;font-weight:500;
-  box-shadow:0 8px 24px rgba(0,0,0,.3);
-  backdrop-filter:blur(8px);transition:transform .2s,opacity .35s
+#b-controls-start, #b-controls-stop {
+  position: absolute;
+  display: flex;
+  gap: 12px;
+  transition: opacity .35s ease;
 }
-#b-start-energy:active, #b-start-calm:active, #b-stop:active{transform:scale(.96)}
-#b-stop { border-color: rgba(255,123,123,0.3); color: #ffaaaa; margin-top:min(8vmin,44px); }
-#b-stop.hidden { display: none; }
+#b-controls-start.hidden, #b-controls-stop.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#b-start-energy, #b-start-calm, #b-stop {
+  padding: 12px 24px;
+  border-radius: 32px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #e0e6ed;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  backdrop-filter: blur(8px);
+  transition: transform .2s, background .2s;
+}
+#b-start-energy:active, #b-start-calm:active, #b-stop:active {
+  transform: scale(.96);
+  background: rgba(255,255,255,.15);
+}
 
 /* ===== Интуиция ===== */
 #i-grid{
@@ -204,7 +224,7 @@ body[data-view="settings"] .view-settings{display:flex}
 .view-settings h2{font-size:19px;font-weight:500;margin-bottom:28px;letter-spacing:.02em}
 .settings-section{width:100%;max-width:340px;margin-bottom:22px}
 .settings-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;
-  opacity:.6;margin-bottom:10px;font-weight:500}
+  opacity:.6;margin-bottom:10px;font-weight:500; display:flex; justify-content:space-between; align-items:center;}
 
 .mode-list { display: flex; flex-direction: column; gap: 8px; }
 .mode-option {
@@ -251,8 +271,21 @@ body[data-view="settings"] .view-settings{display:flex}
 .support-btn:active { transform: scale(.98); background: rgba(255,255,255,.15); }
 .support-btn.secondary { color: #9ab4c9; font-size: 13px; padding: 10px; }
 
+.stats-content {
+  padding: 14px 16px; background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+
+/* PC Adaptation */
+@media (min-width: 768px) {
+  .view { max-width: 600px; }
+  #b-circle { width: min(50vmin, 400px); height: min(50vmin, 400px); }
+  #i-grid { max-width: 450px; }
+  .card { border-radius: 20px; }
+}
+
 @media (max-height:640px){
-  .menu-title{margin-bottom:22px}
   #b-phase{margin-bottom:4px}
   #b-sub{margin-bottom:16px}
   #i-target-wrap{margin-top:16px}
@@ -268,7 +301,6 @@ body[data-view="settings"] .view-settings{display:flex}
 <!-- ===== МЕНЮ ===== -->
 <section class="view view-menu">
   <button class="settings-btn" data-goto="settings" aria-label="Настройки">⚙</button>
-  <div class="menu-title">Тишина</div>
   <button class="menu-card" data-goto="breath">
     <div class="menu-card-icon">◯</div>
     <div>
@@ -298,11 +330,15 @@ body[data-view="settings"] .view-settings{display:flex}
     </svg>
   </div>
   
-  <div class="b-controls" id="b-controls-start">
-    <button id="b-start-energy">Энергия</button>
-    <button id="b-start-calm">Расслабление</button>
+  <div class="b-controls">
+    <div id="b-controls-start">
+      <button id="b-start-energy">Энергия</button>
+      <button id="b-start-calm">Расслабление</button>
+    </div>
+    <div id="b-controls-stop" class="hidden">
+      <button id="b-stop">Остановиться</button>
+    </div>
   </div>
-  <button id="b-stop" class="hidden">Остановить</button>
 </section>
 
 <!-- ===== ИНТУИЦИЯ ===== -->
@@ -329,11 +365,24 @@ body[data-view="settings"] .view-settings{display:flex}
     <div class="settings-label">Оформление и звук</div>
     <div class="sound-row">
       <span>Менять фон при верном ответе</span>
-      <button id="bg-toggle" class="toggle">вкл</button>
+      <button id="bg-toggle" class="toggle">включëн</button>
     </div>
     <div class="sound-row">
       <span>Мягкий звук при верном ответе</span>
-      <button id="sound-toggle" class="toggle">вкл</button>
+      <button id="sound-toggle" class="toggle">включëн</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">
+      Статистика
+      <button id="stats-toggle" style="font-size:18px; opacity:0.7; padding:0; cursor:pointer;" title="Показать/Скрыть">👁️</button>
+    </div>
+    <div id="stats-content" class="stats-content" style="display:none;">
+      <div>Правильных: <span id="stat-right">0</span></div>
+      <div>Неправильных: <span id="stat-wrong">0</span></div>
+      <div>Соотношение: <span id="stat-pct">0%</span></div>
+      <div>Уровень: <span id="stat-level">2</span> карточек</div>
     </div>
   </div>
 
@@ -365,31 +414,24 @@ body[data-view="settings"] .view-settings{display:flex}
   };
   
   const BREATH_STAGES_ENERGY = [
-    { type: 'prepare', label: 'Приготовьтесь', duration: 5 },
+    { type: 'prepare', label: 'Приготовьтесь', sub: 'Дышите ровно и глубоко', duration: 6 },
     { type: 'cycles', label: 'Разминка', cycles: 5, inhale: 4, exhale: 4 },
     { type: 'hold_exhale', label: 'Задержка', duration: 15 },
     { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
-    { type: 'recovery', label: 'Отдых', duration: 15 },
+    { type: 'recovery', label: 'Отдых', sub: 'Дышите свободно', duration: 15 },
     { type: 'cycles', label: 'Дыхание', cycles: 5, inhale: 4, exhale: 4 },
     { type: 'hold_exhale', label: 'Задержка', duration: 20 },
     { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
-    { type: 'recovery', label: 'Отдых', duration: 15 },
+    { type: 'recovery', label: 'Отдых', sub: 'Дышите свободно', duration: 15 },
     { type: 'cycles', label: 'Дыхание', cycles: 5, inhale: 4, exhale: 4 },
     { type: 'hold_exhale', label: 'Задержка', duration: 25 },
     { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
-    { type: 'recovery', label: 'Восстановление', duration: 20 }
+    { type: 'recovery', label: 'Восстановление', sub: 'Медленно вернитесь к обычному дыханию', duration: 20 }
   ];
 
   const BREATH_STAGES_CALM = [
     { type: 'cycles', label: 'Медитация', cycles: 100, inhale: 4, exhale: 6 }
   ];
-
-  const PHRASES = {
-    exhale15: ['Расслабьтесь...', 'Не напрягайтесь...', 'Слушайте тишину...', 'Покой...'],
-    exhale20: ['Доверьтесь телу...', 'Время остановилось...', 'Момент тишины...', 'Расслабление...'],
-    exhale25: ['Вы в безопасности...', 'Просто наблюдайте...', 'Просто будьте...', 'Тишина внутри...'],
-    inhale:   ['Смотрите вдаль...', 'Сохраняйте фокус...', 'Еще немного...', 'Спокойствие...', 'Тишина...']
-  };
 
   const SETTINGS_KEY = 'ts_settings_v1';
   const SESSION_KEY = 'ts_session_v1';
@@ -417,11 +459,11 @@ body[data-view="settings"] .view-settings{display:flex}
   const bSub        = $('b-sub');
   const bLevel      = $('b-level');
   const bCtrlStart  = $('b-controls-start');
-  const bStop       = $('b-stop');
+  const bCtrlStop   = $('b-controls-stop');
 
   /* ======================== СОСТОЯНИЕ ======================== */
   let game = {
-    enabledModes: Object.keys(POOLS), // По умолчанию включены все типы
+    enabledModes: Object.keys(POOLS),
     cards:2,
     rightCount:0, wrongCount:0,
     lastResults:[], cooldown:0,
@@ -441,7 +483,6 @@ body[data-view="settings"] .view-settings{display:flex}
 
   /* ======================== ХРАНИЛИЩЕ ======================== */
   function loadGame(){
-    // 1. Настройки (навсегда)
     try{
       const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
       if(s) {
@@ -451,10 +492,8 @@ body[data-view="settings"] .view-settings{display:flex}
       }
     }catch(e){}
 
-    // Страховка: если вдруг enabledModes пуст
     if (game.enabledModes.length === 0) game.enabledModes = Object.keys(POOLS);
 
-    // 2. Прогресс (сессия)
     try{
       const d = JSON.parse(sessionStorage.getItem(SESSION_KEY));
       if(d) {
@@ -526,12 +565,13 @@ body[data-view="settings"] .view-settings{display:flex}
     bLevel.textContent = '';
     
     bCtrlStart.classList.remove('hidden');
-    bStop.classList.add('hidden');
-    
-    bg.targetDark = 1;
+    bCtrlStop.classList.add('hidden');
   }
   
-  function enterBreathing(){ resetBreathingUI(); }
+  function enterBreathing(){ 
+    resetBreathingUI(); 
+    bg.targetDark = 1;
+  }
   
   function stopBreathing(){
     breathAbort++;
@@ -539,12 +579,16 @@ body[data-view="settings"] .view-settings{display:flex}
   }
 
   function setScale(scale, dur){
-    bCircle.style.transition = `transform ${dur}s linear`;
+    bCircle.style.transition = `transform ${dur}s ease-in-out`;
     requestAnimationFrame(() => { bCircle.style.transform = `scale(${scale})`; });
   }
 
-  // ringMode: 'fill' (289->0), 'drain' (0->-289), 'hold_full' (0->0), 'hold_empty' (289->289)
-  function runCountdown(label, sec, id, scaleFn, phrases = [], ringMode = 'fill') {
+  function changeBgRandomly() {
+    const modes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy'];
+    bg.mode = modes[Math.floor(Math.random() * modes.length)];
+  }
+
+  function runCountdown(label, subLabel, sec, id, scaleFn, ringMode = 'fill') {
     return new Promise(resolve => {
       if (id !== breathAbort) return resolve();
       
@@ -553,35 +597,24 @@ body[data-view="settings"] .view-settings{display:flex}
       
       setTimeout(() => {
         if (id !== breathAbort) return resolve();
+        
         bPhase.textContent = label;
+        bSub.textContent = subLabel;
         bPhase.style.opacity = 1;
-
-        const phraseArr = Array.isArray(phrases) ? phrases : (phrases ? [phrases] : []);
-        let phraseIdx = 0;
-        if (phraseArr.length > 0) {
-          bSub.textContent = phraseArr[0];
-          bSub.style.opacity = 1;
-        } else {
-          bSub.textContent = '';
-        }
+        bSub.style.opacity = 1;
 
         if (scaleFn) scaleFn(sec);
 
         const start = performance.now();
         const end = start + sec * 1000;
-        let lastPhraseUpdate = start;
         
         let startOffset = 289;
         let endOffset = 0;
         
         if (ringMode === 'fill') {
-          startOffset = 289; endOffset = 0;
+          startOffset = 289; endOffset = 0; // empty to full (clockwise)
         } else if (ringMode === 'drain') {
-          startOffset = 0; endOffset = -289;
-        } else if (ringMode === 'hold_full') {
-          startOffset = 0; endOffset = 0;
-        } else if (ringMode === 'hold_empty') {
-          startOffset = 289; endOffset = 289;
+          startOffset = 0; endOffset = -289; // full to empty (clockwise)
         }
         
         bProgress.style.transition = 'none';
@@ -596,81 +629,61 @@ body[data-view="settings"] .view-settings{display:flex}
           const currentOffset = startOffset + (endOffset - startOffset) * progress;
           bProgress.style.strokeDashoffset = currentOffset;
 
-          if (phraseArr.length > 1 && now - lastPhraseUpdate > 6000) {
-            phraseIdx = (phraseIdx + 1) % phraseArr.length;
-            bSub.style.opacity = 0;
-            setTimeout(() => {
-              if (id !== breathAbort) return;
-              bSub.textContent = phraseArr[phraseIdx];
-              bSub.style.opacity = 1;
-            }, 300);
-            lastPhraseUpdate = now;
-          }
-
           if (now < end) {
             requestAnimationFrame(frame);
           } else {
             resolve();
           }
         }
-        
         requestAnimationFrame(frame);
-      }, 60);
+      }, 200);
     });
   }
 
   async function runStage(stage, id) {
     if (id !== breathAbort) return;
+    
+    changeBgRandomly();
 
     if (stage.type === 'prepare' || stage.type === 'recovery') {
-      await runCountdown(stage.label, stage.duration, id, (sec) => {
+      bLevel.textContent = '';
+      await runCountdown(stage.label, stage.sub || 'Дышите ровно и глубоко', stage.duration, id, (sec) => {
         if (stage.type === 'prepare') setScale(.55, 0.5);
-      }, stage.type === 'prepare' ? 'Дышите ровно и глубоко' : 'Медленно вернитесь к обычному дыханию', 'hold_empty');
+      }, 'fill'); // fill acts as a timer
     } 
     
     else if (stage.type === 'cycles') {
-      bLevel.textContent = stage.label;
+      bLevel.textContent = ''; // no text in corner
       for (let i = 0; i < stage.cycles; i++) {
         if (id !== breathAbort) return;
-        await runCountdown('Вдох', stage.inhale, id, (sec) => setScale(1, sec), 'Наполнитесь воздухом', 'fill');
+        await runCountdown('Глубокий вдох', 'Наполнитесь воздухом', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
         if (id !== breathAbort) return;
-        await runCountdown('Выдох', stage.exhale, id, (sec) => setScale(.55, sec), 'Отпустите всё', 'drain');
+        await runCountdown('Плавный выдох', 'Отпустите всё', stage.exhale, id, (sec) => setScale(.55, sec), 'drain');
       }
     } 
     
     else if (stage.type === 'hold_exhale') {
-      bLevel.textContent = stage.label;
-      bg.mode = 'glints';
-      
-      await runCountdown('Выдох', 4, id, (sec) => setScale(.55, sec), 'Плавный выдох', 'drain');
+      bLevel.textContent = 'Задержка';
+      await runCountdown('Плавный выдох', 'Подготовка к задержке', 4, id, (sec) => setScale(.55, sec), 'drain');
       if (id !== breathAbort) return;
-      
-      let phrases = PHRASES.exhale15;
-      if (stage.duration >= 20) phrases = PHRASES.exhale20;
-      if (stage.duration >= 25) phrases = PHRASES.exhale25;
-      
-      await runCountdown('Не дышите', stage.duration, id, (sec) => setScale(.55, 0.5), phrases, 'hold_empty');
+      await runCountdown('Затаите дыхание', 'Не дышите', stage.duration, id, (sec) => setScale(.55, 0.5), 'fill');
     } 
     
     else if (stage.type === 'inhale_hold') {
-      bLevel.textContent = stage.label;
-      
-      await runCountdown('Вдох', stage.inhale, id, (sec) => setScale(1, sec), 'Максимально глубоко', 'fill');
+      bLevel.textContent = 'Задержка';
+      await runCountdown('Глубокий вдох', 'Максимально глубоко', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
       if (id !== breathAbort) return;
-      
-      bg.mode = 'stars';
-      await runCountdown('Задержите', stage.hold, id, (sec) => setScale(1, 0.5), PHRASES.inhale, 'hold_full');
+      await runCountdown('Затаите дыхание', 'Не дышите', stage.hold, id, (sec) => setScale(1, 0.5), 'fill');
     }
   }
 
   async function runBreathing(stages){
     const id = ++breathAbort;
     bCtrlStart.classList.add('hidden');
-    bStop.classList.remove('hidden');
+    bCtrlStop.classList.remove('hidden');
     
     for (let i = 0; i < stages.length; i++) {
       if (id !== breathAbort) return;
-      if (stages.length > 1) bLevel.textContent = `Шаг ${i + 1} из ${stages.length}`;
       await runStage(stages[i], id);
     }
     
@@ -684,8 +697,7 @@ body[data-view="settings"] .view-settings{display:flex}
     bCircle.style.transform  = 'scale(.55)';
     
     bCtrlStart.classList.remove('hidden');
-    bStop.classList.add('hidden');
-    bg.mode = 'bubbles';
+    bCtrlStop.classList.add('hidden');
   }
 
   $('b-start-energy').addEventListener('click', async () => {
@@ -708,7 +720,7 @@ body[data-view="settings"] .view-settings{display:flex}
     runBreathing(BREATH_STAGES_CALM);
   });
 
-  bStop.addEventListener('click', () => {
+  $('b-stop').addEventListener('click', () => {
     stopBreathing();
   });
 
@@ -736,6 +748,7 @@ body[data-view="settings"] .view-settings{display:flex}
   /* ======================== ИНТУИЦИЯ ======================== */
   function enterIntuition() {
     bg.mode = 'stars';
+    bg.intensity = 1;
     startRound();
   }
   function exitIntuition() {
@@ -776,30 +789,24 @@ body[data-view="settings"] .view-settings{display:flex}
     targetEl.textContent = '';
     targetEl.style.color = '#fff';
 
-    // 1. Определяем, какие типы открыты согласно текущему уровню (количеству карточек)
     let unlockedModes = ['colors'];
     if (game.cards >= 3) unlockedModes.push('symbols');
     if (game.cards >= 5) unlockedModes.push('digits');
     if (game.cards >= 7) unlockedModes.push('letters', 'images');
 
-    // 2. Фильтруем их по галочкам в настройках пользователя
     let activeModes = unlockedModes.filter(m => game.enabledModes.includes(m));
-    
-    // На всякий случай: если ничего не осталось, принудительно берем цвета
     if (activeModes.length === 0) activeModes = ['colors'];
 
-    // 3. Считаем веса на основе навыка
     let totalWeight = 0;
     const weights = [];
     activeModes.forEach(m => {
       const stat = game.skillStats[m];
       const rating = stat.total > 0 ? (stat.wins / stat.total) * 100 : 50;
-      const w = rating + 20; // Базовая фора
+      const w = rating + 20;
       weights.push({ mode: m, w });
       totalWeight += w;
     });
     
-    // 4. Выбираем тип по весам
     let rand = Math.random() * totalWeight;
     let selectedMode = activeModes[0];
     for (const item of weights) {
@@ -809,7 +816,6 @@ body[data-view="settings"] .view-settings{display:flex}
 
     session.currentMode = selectedMode;
 
-    // 5. Генерируем карточки
     const pool = POOLS[selectedMode].slice();
     shuffle(pool);
     const items = pool.slice(0, game.cards);
@@ -862,8 +868,8 @@ body[data-view="settings"] .view-settings{display:flex}
       
       if (game.bgChangeOnCorrect) {
         const bgModes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy'];
-        let nextIdx = (bgModes.indexOf(bg.mode) + 1) % bgModes.length;
-        bg.mode = bgModes[nextIdx];
+        bg.mode = bgModes[Math.floor(Math.random() * bgModes.length)];
+        bg.intensity = 1 + ((game.cards - 2) / 7) * 3; // increases with complexity
       }
     } else {
       game.wrongCount++;
@@ -933,24 +939,29 @@ body[data-view="settings"] .view-settings{display:flex}
           if (game.enabledModes.length > 1) {
             game.enabledModes = game.enabledModes.filter(m => m !== mode);
           } else {
-            return; // Нельзя снять последнюю галочку
+            return;
           }
         } else {
           game.enabledModes.push(mode);
         }
-        
         saveSettings();
         renderSettings();
       });
-      
       modeListEl.appendChild(label);
     });
 
-    soundToggle.textContent = game.soundOn ? 'вкл' : 'выкл';
+    soundToggle.textContent = game.soundOn ? 'включён' : 'выключен';
     soundToggle.classList.toggle('on', game.soundOn);
-    
-    bgToggle.textContent = game.bgChangeOnCorrect ? 'вкл' : 'выкл';
+    bgToggle.textContent = game.bgChangeOnCorrect ? 'включëн' : 'выключен';
     bgToggle.classList.toggle('on', game.bgChangeOnCorrect);
+
+    // Update stats
+    $('stat-right').textContent = game.rightCount;
+    $('stat-wrong').textContent = game.wrongCount;
+    const total = game.rightCount + game.wrongCount;
+    const pct = total > 0 ? Math.round(game.rightCount / total * 100) : 0;
+    $('stat-pct').textContent = pct + '%';
+    $('stat-level').textContent = game.cards;
   }
 
   soundToggle.addEventListener('click', () => {
@@ -963,6 +974,11 @@ body[data-view="settings"] .view-settings{display:flex}
     game.bgChangeOnCorrect = !game.bgChangeOnCorrect;
     saveSettings();
     renderSettings();
+  });
+
+  $('stats-toggle').addEventListener('click', () => {
+    const el = $('stats-content');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
   });
 
   /* ======================== CANVAS ФОН ======================== */
@@ -981,6 +997,7 @@ body[data-view="settings"] .view-settings{display:flex}
     targetDark: 1,
     currentDark: 1,
     mode: 'stars',
+    intensity: 1,
     particles: [],
     t: 0
   };
@@ -988,7 +1005,7 @@ body[data-view="settings"] .view-settings{display:flex}
   const darkLayer = $('bg-layer-dark');
 
   function initParticles() {
-    bg.particles = [];
+    bg.particles = bg.particles.filter(p => p.isTemp); // keep temp particles on resize
     const count = 80;
     for (let i = 0; i < count; i++) {
       bg.particles.push({
@@ -1004,17 +1021,56 @@ body[data-view="settings"] .view-settings{display:flex}
     }
   }
 
+  canvas.addEventListener('pointerdown', (e) => {
+    for (let i = 0; i < 15; i++) {
+      bg.particles.push({
+        x: e.clientX,
+        y: e.clientY,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.5) * 8,
+        size: Math.random() * 3 + 1,
+        phase: Math.random() * Math.PI * 2,
+        speed: Math.random() * 2,
+        life: 1,
+        isTemp: true,
+        color: `hsla(${Math.random() * 60 + 180}, 80%, 70%, 1)`
+      });
+    }
+  });
+
   function draw() {
-    bg.t += 0.015;
-    bg.currentDark += (bg.targetDark - bg.currentDark) * 0.03;
+    bg.t += 0.01;
+    
+    // Smoothly oscillate darkness
+    bg.targetDark = 0.8 + Math.sin(bg.t * 0.2) * 0.2;
+    bg.currentDark += (bg.targetDark - bg.currentDark) * 0.02;
     darkLayer.style.opacity = bg.currentDark;
     
     ctx.clearRect(0, 0, W, H);
     
-    bg.particles.forEach(p => {
+    bg.particles = bg.particles.filter(p => {
+      if (p.isTemp) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.life -= 0.02;
+        if (p.life <= 0) return false;
+        
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        return true;
+      }
+
+      const spd = bg.intensity || 1;
+      
       if (bg.mode === 'wind') {
-        p.x += 3 + Math.sin(bg.t + p.phase) * 2;
-        p.y += Math.cos(bg.t + p.phase) * 1.5;
+        p.x += (3 + Math.sin(bg.t + p.phase) * 2) * spd;
+        p.y += Math.cos(bg.t + p.phase) * 1.5 * spd;
         if (p.x > W + 50) { p.x = -50; p.y = Math.random() * H; }
         ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
         ctx.lineWidth = 1.5;
@@ -1024,8 +1080,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.stroke();
       } 
       else if (bg.mode === 'glints') {
-        p.y -= 0.5 * p.speed;
-        p.x += Math.sin(bg.t * 2 + p.phase) * 0.5;
+        p.y -= 0.5 * p.speed * spd;
+        p.x += Math.sin(bg.t * 2 + p.phase) * 0.5 * spd;
         if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
         const alpha = 0.2 + Math.sin(bg.t * 4 + p.phase) * 0.2;
         ctx.fillStyle = `rgba(255, 230, 180, ${alpha})`;
@@ -1034,8 +1090,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'stars') {
-        p.x += p.vx * 0.1;
-        p.y += p.vy * 0.1;
+        p.x += p.vx * 0.1 * spd;
+        p.y += p.vy * 0.1 * spd;
         if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
         if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
         const alpha = 0.3 + Math.sin(bg.t * 2 + p.phase) * 0.4;
@@ -1045,8 +1101,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'bubbles') {
-        p.y -= 1 * p.speed;
-        p.x += Math.sin(bg.t + p.phase) * 0.8;
+        p.y -= 1 * p.speed * spd;
+        p.x += Math.sin(bg.t + p.phase) * 0.8 * spd;
         if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
         ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
         ctx.lineWidth = 1;
@@ -1055,8 +1111,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.stroke();
       }
       else if (bg.mode === 'aurora') {
-        p.y -= 0.2 * p.speed;
-        p.x += Math.sin(bg.t * 0.5 + p.phase) * 1.5;
+        p.y -= 0.2 * p.speed * spd;
+        p.x += Math.sin(bg.t * 0.5 + p.phase) * 1.5 * spd;
         if (p.y < -100) { p.y = H + 100; p.x = Math.random() * W; }
         const alpha = 0.05 + Math.sin(bg.t + p.phase) * 0.05;
         ctx.fillStyle = `rgba(100, 255, 200, ${alpha})`;
@@ -1065,8 +1121,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'leaves') {
-        p.x += Math.sin(bg.t + p.phase) * 0.5;
-        p.y += 0.5 * p.speed;
+        p.x += Math.sin(bg.t + p.phase) * 0.5 * spd;
+        p.y += 0.5 * p.speed * spd;
         if (p.y > H + 50) { p.y = -50; p.x = Math.random() * W; }
         ctx.fillStyle = `rgba(180, 220, 180, 0.15)`;
         ctx.beginPath();
@@ -1074,8 +1130,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'fireflies') {
-        p.x += Math.sin(bg.t * p.speed + p.phase) * 0.5;
-        p.y += Math.cos(bg.t * p.speed + p.phase) * 0.5;
+        p.x += Math.sin(bg.t * p.speed + p.phase) * 0.5 * spd;
+        p.y += Math.cos(bg.t * p.speed + p.phase) * 0.5 * spd;
         const alpha = 0.5 + Math.sin(bg.t * 3 + p.phase) * 0.5;
         ctx.fillStyle = `rgba(255, 255, 150, ${alpha * 0.5})`;
         ctx.beginPath();
@@ -1083,8 +1139,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'snow') {
-        p.y += 0.5 * p.speed;
-        p.x += Math.sin(bg.t + p.phase) * 0.3;
+        p.y += 0.5 * p.speed * spd;
+        p.x += Math.sin(bg.t + p.phase) * 0.3 * spd;
         if (p.y > H + 50) { p.y = -50; p.x = Math.random() * W; }
         const alpha = 0.4 + Math.sin(bg.t + p.phase) * 0.3;
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
@@ -1093,7 +1149,7 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'ripples') {
-        p.life -= 0.005 * p.speed;
+        p.life -= 0.005 * p.speed * spd;
         if (p.life <= 0) {
           p.life = 1;
           p.x = Math.random() * W;
@@ -1107,8 +1163,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.stroke();
       }
       else if (bg.mode === 'galaxy') {
-        p.x += Math.cos(bg.t * 0.5 + p.phase) * 0.5;
-        p.y += Math.sin(bg.t * 0.5 + p.phase) * 0.5;
+        p.x += Math.cos(bg.t * 0.5 + p.phase) * 0.5 * spd;
+        p.y += Math.sin(bg.t * 0.5 + p.phase) * 0.5 * spd;
         if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
         if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
         const alpha = 0.2 + Math.sin(bg.t + p.phase) * 0.2;
@@ -1117,6 +1173,7 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
         ctx.fill();
       }
+      return true;
     });
     
     requestAnimationFrame(draw);
