@@ -29,7 +29,7 @@ a{text-decoration:none;color:inherit;}
 }
 #bg-canvas {
   position: fixed; inset: 0; z-index: 0;
-  pointer-events: auto; /* Enable clicks for interaction */
+  pointer-events: auto;
 }
 
 /* ===== Переключение экранов ===== */
@@ -40,6 +40,13 @@ body[data-view="menu"]     .view-menu,
 body[data-view="breath"]   .view-breath,
 body[data-view="intuition"] .view-intuition,
 body[data-view="settings"] .view-settings{display:flex}
+
+.view-settings {
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-top: 70px;
+  padding-bottom: 60px;
+}
 
 /* ===== Общие кнопки ===== */
 .back-btn,.settings-btn{
@@ -226,15 +233,16 @@ body[data-view="settings"] .view-settings{display:flex}
 .settings-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;
   opacity:.6;margin-bottom:10px;font-weight:500; display:flex; justify-content:space-between; align-items:center;}
 
-.mode-list { display: flex; flex-direction: column; gap: 8px; }
+/* Компактные чекбоксы */
+.mode-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .mode-option {
-  display: flex; align-items: center; gap: 10px; cursor: pointer;
-  padding: 10px 14px; background: rgba(255,255,255,0.08);
-  border-radius: 12px; font-size: 14px; border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 8px 10px; background: rgba(255,255,255,0.08);
+  border-radius: 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1);
   transition: background 0.2s;
 }
 .mode-option .check-box {
-  width: 18px; height: 18px; border-radius: 4px;
+  width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
   border: 2px solid rgba(255,255,255,0.3);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
@@ -243,7 +251,7 @@ body[data-view="settings"] .view-settings{display:flex}
   background: #4a7c9e; border-color: #4a7c9e;
 }
 .mode-option.active .check-box::after {
-  content: ''; width: 5px; height: 9px;
+  content: ''; width: 4px; height: 8px;
   border: solid white; border-width: 0 2px 2px 0;
   transform: rotate(45deg); margin-bottom: 2px;
 }
@@ -261,21 +269,28 @@ body[data-view="settings"] .view-settings{display:flex}
 }
 .toggle.on{background:linear-gradient(135deg,#4a7c9e,#2c536b);color:#fff}
 
+.stats-toggle {
+  padding: 14px 16px; background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+  text-align: center; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background 0.2s;
+}
+.stats-toggle:active { background: rgba(255,255,255,.15); }
+
+.stats-content {
+  padding: 14px 16px; background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+  line-height: 1.6; font-size: 14px; display: none; margin-top: 10px;
+}
+
 .support-links { display: flex; flex-direction: column; gap: 10px; }
 .support-btn {
   display: block; text-align: center; padding: 12px;
   background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
   border-radius: 16px; font-size: 14px; font-weight: 500;
-  transition: background .2s, transform .2s;
+  transition: background .2s, transform .2s; color: #e0e6ed;
 }
 .support-btn:active { transform: scale(.98); background: rgba(255,255,255,.15); }
-.support-btn.secondary { color: #9ab4c9; font-size: 13px; padding: 10px; }
-
-.stats-content {
-  padding: 14px 16px; background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
-  line-height: 1.6; font-size: 14px;
-}
 
 /* PC Adaptation */
 @media (min-width: 768px) {
@@ -283,6 +298,7 @@ body[data-view="settings"] .view-settings{display:flex}
   #b-circle { width: min(50vmin, 400px); height: min(50vmin, 400px); }
   #i-grid { max-width: 450px; }
   .card { border-radius: 20px; }
+  .mode-list { grid-template-columns: 1fr 1fr 1fr; }
 }
 
 @media (max-height:640px){
@@ -365,20 +381,26 @@ body[data-view="settings"] .view-settings{display:flex}
     <div class="settings-label">Оформление и звук</div>
     <div class="sound-row">
       <span>Менять фон при верном ответе</span>
-      <button id="bg-toggle" class="toggle">включëн</button>
+      <button id="bg-toggle" class="toggle">вкл</button>
     </div>
     <div class="sound-row">
       <span>Мягкий звук при верном ответе</span>
-      <button id="sound-toggle" class="toggle">включëн</button>
+      <button id="sound-toggle" class="toggle">вкл</button>
+    </div>
+    <div class="sound-row">
+      <span>Тихий щелчок при ответе</span>
+      <button id="click-toggle" class="toggle">вкл</button>
+    </div>
+    <div class="sound-row">
+      <span>Взаимодействие с фоном по клику</span>
+      <button id="interact-toggle" class="toggle">вкл</button>
     </div>
   </div>
 
   <div class="settings-section">
-    <div class="settings-label">
-      Статистика
-      <button id="stats-toggle" style="font-size:18px; opacity:0.7; padding:0; cursor:pointer;" title="Показать/Скрыть">👁️</button>
-    </div>
-    <div id="stats-content" class="stats-content" style="display:none;">
+    <div class="settings-label">Статистика</div>
+    <div id="stats-toggle" class="stats-toggle">Показать статистику</div>
+    <div id="stats-content" class="stats-content">
       <div>Правильных: <span id="stat-right">0</span></div>
       <div>Неправильных: <span id="stat-wrong">0</span></div>
       <div>Соотношение: <span id="stat-pct">0%</span></div>
@@ -390,7 +412,7 @@ body[data-view="settings"] .view-settings{display:flex}
     <div class="settings-label">Поддержка</div>
     <div class="support-links">
       <a href="https://dalink.to/tomvazovsky" target="_blank" class="support-btn">Поддержать проект</a>
-      <a href="https://github.com/Thomekk/Intuition" target="_blank" class="support-btn secondary">Открытый исходный код (GitHub)</a>
+      <a href="https://github.com/Thomekk/Intuition" target="_blank" class="support-btn">Открытый исходный код (GitHub)</a>
     </div>
   </div>
 </section>
@@ -426,7 +448,7 @@ body[data-view="settings"] .view-settings{display:flex}
     { type: 'cycles', label: 'Дыхание', cycles: 5, inhale: 4, exhale: 4 },
     { type: 'hold_exhale', label: 'Задержка', duration: 25 },
     { type: 'inhale_hold', label: 'Задержка', inhale: 4, hold: 15 },
-    { type: 'recovery', label: 'Восстановление', sub: 'Медленно вернитесь к обычному дыханию', duration: 20 }
+    { type: 'recovery', label: 'Восстановление', sub: 'Дышите свободно', duration: 20 }
   ];
 
   const BREATH_STAGES_CALM = [
@@ -453,6 +475,8 @@ body[data-view="settings"] .view-settings{display:flex}
   const modeListEl  = $('mode-list');
   const soundToggle = $('sound-toggle');
   const bgToggle    = $('bg-toggle');
+  const clickToggle = $('click-toggle');
+  const interactToggle = $('interact-toggle');
   const bCircle     = $('b-circle');
   const bProgress   = $('b-progress');
   const bPhase      = $('b-phase');
@@ -468,7 +492,9 @@ body[data-view="settings"] .view-settings{display:flex}
     rightCount:0, wrongCount:0,
     lastResults:[], cooldown:0,
     soundOn:true,
+    clickSoundOn:true,
     bgChangeOnCorrect:true,
+    interactOnClick:true,
     skillStats: {
       colors: {wins: 0, total: 0},
       symbols: {wins: 0, total: 0},
@@ -488,7 +514,9 @@ body[data-view="settings"] .view-settings{display:flex}
       if(s) {
         if(Array.isArray(s.enabledModes)) game.enabledModes = s.enabledModes;
         if(typeof s.soundOn === 'boolean') game.soundOn = s.soundOn;
+        if(typeof s.clickSoundOn === 'boolean') game.clickSoundOn = s.clickSoundOn;
         if(typeof s.bgChangeOnCorrect === 'boolean') game.bgChangeOnCorrect = s.bgChangeOnCorrect;
+        if(typeof s.interactOnClick === 'boolean') game.interactOnClick = s.interactOnClick;
       }
     }catch(e){}
 
@@ -516,7 +544,9 @@ body[data-view="settings"] .view-settings{display:flex}
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({
         enabledModes: game.enabledModes,
         soundOn: game.soundOn,
-        bgChangeOnCorrect: game.bgChangeOnCorrect
+        clickSoundOn: game.clickSoundOn,
+        bgChangeOnCorrect: game.bgChangeOnCorrect,
+        interactOnClick: game.interactOnClick
       }));
     }catch(e){}
   }
@@ -584,8 +614,58 @@ body[data-view="settings"] .view-settings{display:flex}
   }
 
   function changeBgRandomly() {
-    const modes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy'];
+    const modes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy', 'smoke'];
     bg.mode = modes[Math.floor(Math.random() * modes.length)];
+    initParticles();
+  }
+
+  async function runFreeBreathing(label, subLabel, sec, id) {
+    if (id !== breathAbort) return;
+    
+    bPhase.style.opacity = 0;
+    bSub.style.opacity = 0;
+    await sleep(200);
+    if (id !== breathAbort) return;
+
+    bPhase.textContent = label;
+    bSub.textContent = subLabel;
+    bPhase.style.opacity = 1;
+    bSub.style.opacity = 1;
+
+    const start = performance.now();
+    const end = start + sec * 1000;
+    
+    let startOffset = 289;
+    let endOffset = 0;
+    bProgress.style.transition = 'none';
+    bProgress.style.strokeDashoffset = startOffset;
+
+    let inhale = true;
+    let lastToggle = performance.now();
+    setScale(inhale ? 1 : .55, 4);
+
+    return new Promise(resolve => {
+      function frame(now) {
+        if (id !== breathAbort) return resolve();
+
+        const elapsed = now - start;
+        const progress = Math.min(1, elapsed / (sec * 1000));
+        bProgress.style.strokeDashoffset = startOffset + (endOffset - startOffset) * progress;
+
+        if (now - lastToggle >= 4000) {
+          inhale = !inhale;
+          setScale(inhale ? 1 : .55, 4);
+          lastToggle = now;
+        }
+
+        if (now < end) {
+          requestAnimationFrame(frame);
+        } else {
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
   }
 
   function runCountdown(label, subLabel, sec, id, scaleFn, ringMode = 'fill') {
@@ -612,9 +692,9 @@ body[data-view="settings"] .view-settings{display:flex}
         let endOffset = 0;
         
         if (ringMode === 'fill') {
-          startOffset = 289; endOffset = 0; // empty to full (clockwise)
+          startOffset = 289; endOffset = 0;
         } else if (ringMode === 'drain') {
-          startOffset = 0; endOffset = -289; // full to empty (clockwise)
+          startOffset = 0; endOffset = -289;
         }
         
         bProgress.style.transition = 'none';
@@ -647,13 +727,10 @@ body[data-view="settings"] .view-settings{display:flex}
 
     if (stage.type === 'prepare' || stage.type === 'recovery') {
       bLevel.textContent = '';
-      await runCountdown(stage.label, stage.sub || 'Дышите ровно и глубоко', stage.duration, id, (sec) => {
-        if (stage.type === 'prepare') setScale(.55, 0.5);
-      }, 'fill'); // fill acts as a timer
+      await runFreeBreathing(stage.label, stage.sub || 'Дышите ровно', stage.duration, id);
     } 
-    
     else if (stage.type === 'cycles') {
-      bLevel.textContent = ''; // no text in corner
+      bLevel.textContent = '';
       for (let i = 0; i < stage.cycles; i++) {
         if (id !== breathAbort) return;
         await runCountdown('Глубокий вдох', 'Наполнитесь воздухом', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
@@ -661,14 +738,12 @@ body[data-view="settings"] .view-settings{display:flex}
         await runCountdown('Плавный выдох', 'Отпустите всё', stage.exhale, id, (sec) => setScale(.55, sec), 'drain');
       }
     } 
-    
     else if (stage.type === 'hold_exhale') {
       bLevel.textContent = 'Задержка';
       await runCountdown('Плавный выдох', 'Подготовка к задержке', 4, id, (sec) => setScale(.55, sec), 'drain');
       if (id !== breathAbort) return;
       await runCountdown('Затаите дыхание', 'Не дышите', stage.duration, id, (sec) => setScale(.55, 0.5), 'fill');
     } 
-    
     else if (stage.type === 'inhale_hold') {
       bLevel.textContent = 'Задержка';
       await runCountdown('Глубокий вдох', 'Максимально глубоко', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
@@ -745,10 +820,30 @@ body[data-view="settings"] .view-settings{display:flex}
     }catch(e){}
   }
 
+  function playClick(){
+    if(!game.clickSoundOn) return;
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + .05);
+      gain.gain.setValueAtTime(.05, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + .05);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + .05);
+    }catch(e){}
+  }
+
   /* ======================== ИНТУИЦИЯ ======================== */
   function enterIntuition() {
     bg.mode = 'stars';
     bg.intensity = 1;
+    initParticles();
     startRound();
   }
   function exitIntuition() {
@@ -865,11 +960,13 @@ body[data-view="settings"] .view-settings{display:flex}
       card.classList.add('correct');
       renderCardContent(card, session.items[index], currentMode);
       playSuccess();
+      playClick();
       
       if (game.bgChangeOnCorrect) {
-        const bgModes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy'];
+        const bgModes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy', 'smoke'];
         bg.mode = bgModes[Math.floor(Math.random() * bgModes.length)];
-        bg.intensity = 1 + ((game.cards - 2) / 7) * 3; // increases with complexity
+        bg.intensity = 1 + ((game.cards - 2) / 7) * 3;
+        initParticles();
       }
     } else {
       game.wrongCount++;
@@ -950,12 +1047,18 @@ body[data-view="settings"] .view-settings{display:flex}
       modeListEl.appendChild(label);
     });
 
-    soundToggle.textContent = game.soundOn ? 'включён' : 'выключен';
+    soundToggle.textContent = game.soundOn ? 'вкл' : 'выкл';
     soundToggle.classList.toggle('on', game.soundOn);
-    bgToggle.textContent = game.bgChangeOnCorrect ? 'включëн' : 'выключен';
+    
+    clickToggle.textContent = game.clickSoundOn ? 'вкл' : 'выкл';
+    clickToggle.classList.toggle('on', game.clickSoundOn);
+
+    bgToggle.textContent = game.bgChangeOnCorrect ? 'вкл' : 'выкл';
     bgToggle.classList.toggle('on', game.bgChangeOnCorrect);
 
-    // Update stats
+    interactToggle.textContent = game.interactOnClick ? 'вкл' : 'выкл';
+    interactToggle.classList.toggle('on', game.interactOnClick);
+
     $('stat-right').textContent = game.rightCount;
     $('stat-wrong').textContent = game.wrongCount;
     const total = game.rightCount + game.wrongCount;
@@ -969,6 +1072,12 @@ body[data-view="settings"] .view-settings{display:flex}
     saveSettings();
     renderSettings();
   });
+
+  clickToggle.addEventListener('click', () => {
+    game.clickSoundOn = !game.clickSoundOn;
+    saveSettings();
+    renderSettings();
+  });
   
   bgToggle.addEventListener('click', () => {
     game.bgChangeOnCorrect = !game.bgChangeOnCorrect;
@@ -976,9 +1085,17 @@ body[data-view="settings"] .view-settings{display:flex}
     renderSettings();
   });
 
+  interactToggle.addEventListener('click', () => {
+    game.interactOnClick = !game.interactOnClick;
+    saveSettings();
+    renderSettings();
+  });
+
   $('stats-toggle').addEventListener('click', () => {
     const el = $('stats-content');
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    const isHidden = el.style.display === 'none' || el.style.display === '';
+    el.style.display = isHidden ? 'block' : 'none';
+    $('stats-toggle').textContent = isHidden ? 'Скрыть статистику' : 'Показать статистику';
   });
 
   /* ======================== CANVAS ФОН ======================== */
@@ -987,8 +1104,14 @@ body[data-view="settings"] .view-settings{display:flex}
   let W, H;
   
   function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.scale(dpr, dpr);
+    W = window.innerWidth;
+    H = window.innerHeight;
     initParticles();
   }
   window.addEventListener('resize', resize);
@@ -1005,8 +1128,8 @@ body[data-view="settings"] .view-settings{display:flex}
   const darkLayer = $('bg-layer-dark');
 
   function initParticles() {
-    bg.particles = bg.particles.filter(p => p.isTemp); // keep temp particles on resize
-    const count = 80;
+    bg.particles = [];
+    const count = bg.mode === 'smoke' ? 40 : 80;
     for (let i = 0; i < count; i++) {
       bg.particles.push({
         x: Math.random() * W,
@@ -1022,26 +1145,50 @@ body[data-view="settings"] .view-settings{display:flex}
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    for (let i = 0; i < 15; i++) {
+    if (!game.interactOnClick) return;
+    const cx = e.clientX;
+    const cy = e.clientY;
+
+    if (bg.mode === 'ripples') {
       bg.particles.push({
-        x: e.clientX,
-        y: e.clientY,
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8,
-        size: Math.random() * 3 + 1,
-        phase: Math.random() * Math.PI * 2,
-        speed: Math.random() * 2,
-        life: 1,
-        isTemp: true,
-        color: `hsla(${Math.random() * 60 + 180}, 80%, 70%, 1)`
+        x: cx, y: cy, life: 1, isTemp: true, radius: 0, type: 'ripple'
+      });
+      if (bg.particles.filter(p => p.isTemp).length > 15) {
+        bg.particles = bg.particles.filter((p, i, arr) => !p.isTemp || i > arr.length - 15);
+      }
+    } 
+    else if (bg.mode === 'wind' || bg.mode === 'smoke' || bg.mode === 'glints') {
+      bg.particles.forEach(p => {
+        if (!p.isTemp) {
+          const dx = p.x - cx;
+          const dy = p.y - cy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 200) {
+            const force = (200 - dist) / 200;
+            p.vx += (dx / (dist + 1)) * force * 8;
+            p.vy += (dy / (dist + 1)) * force * 8;
+          }
+        }
+      });
+    }
+    else {
+      bg.particles.forEach(p => {
+        if (!p.isTemp) {
+          const dx = p.x - cx;
+          const dy = p.y - cy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 150) {
+            const force = (150 - dist) / 150;
+            p.vx += (dx / (dist + 1)) * force * 4;
+            p.vy += (dy / (dist + 1)) * force * 4;
+          }
+        }
       });
     }
   });
 
   function draw() {
     bg.t += 0.01;
-    
-    // Smoothly oscillate darkness
     bg.targetDark = 0.8 + Math.sin(bg.t * 0.2) * 0.2;
     bg.currentDark += (bg.targetDark - bg.currentDark) * 0.02;
     darkLayer.style.opacity = bg.currentDark;
@@ -1050,39 +1197,79 @@ body[data-view="settings"] .view-settings{display:flex}
     
     bg.particles = bg.particles.filter(p => {
       if (p.isTemp) {
+        if (p.type === 'ripple') {
+          p.radius += 3;
+          p.life -= 0.02;
+          if (p.life <= 0) return false;
+          ctx.strokeStyle = `rgba(150, 200, 255, ${p.life * 0.3})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          return true;
+        }
         p.x += p.vx;
         p.y += p.vy;
         p.vx *= 0.95;
         p.vy *= 0.95;
         p.life -= 0.02;
         if (p.life <= 0) return false;
-        
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life;
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.5})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
         return true;
       }
 
       const spd = bg.intensity || 1;
       
+      // Soft friction for interactive particles
+      if (bg.mode === 'wind' || bg.mode === 'smoke' || bg.mode === 'glints') {
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+      } else {
+        p.vx *= 0.98;
+        p.vy *= 0.98;
+      }
+
       if (bg.mode === 'wind') {
-        p.x += (3 + Math.sin(bg.t + p.phase) * 2) * spd;
-        p.y += Math.cos(bg.t + p.phase) * 1.5 * spd;
-        if (p.x > W + 50) { p.x = -50; p.y = Math.random() * H; }
+        p.vx += ((1 + Math.sin(bg.t + p.phase)*0.5) - p.vx) * 0.02;
+        p.vy += ((Math.cos(bg.t + p.phase)*0.5) - p.vy) * 0.02;
+        p.x += p.vx * spd;
+        p.y += p.vy * spd;
+        if (p.x > W + 50) { p.x = -50; p.y = Math.random() * H; p.vx = 1; p.vy = 0; }
+        if (p.x < -50) { p.x = W + 50; p.y = Math.random() * H; p.vx = 1; p.vy = 0; }
+        if (p.y > H + 50) p.y = -50;
+        if (p.y < -50) p.y = H + 50;
         ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - 40, p.y);
+        ctx.lineTo(p.x - p.vx * 10, p.y - p.vy * 10);
         ctx.stroke();
       } 
+      else if (bg.mode === 'smoke') {
+        p.vx += (Math.sin(bg.t * 0.2 + p.phase) * 0.5 - p.vx) * 0.02;
+        p.vy += (-0.2 - p.vy) * 0.02;
+        p.x += p.vx * spd;
+        p.y += p.vy * spd;
+        if (p.y < -200) { p.y = H + 200; p.x = Math.random() * W; }
+        if (p.x < -200) p.x = W + 200;
+        if (p.x > W + 200) p.x = -200;
+        const alpha = 0.03 + Math.sin(bg.t + p.phase) * 0.02;
+        ctx.fillStyle = `rgba(220, 220, 240, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
       else if (bg.mode === 'glints') {
-        p.y -= 0.5 * p.speed * spd;
-        p.x += Math.sin(bg.t * 2 + p.phase) * 0.5 * spd;
+        p.vx += (Math.sin(bg.t * 2 + p.phase) * 0.5 - p.vx) * 0.02;
+        p.vy += ((-0.5 * p.speed) - p.vy) * 0.02;
+        p.x += p.vx * spd;
+        p.y += p.vy * spd;
         if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
+        if (p.x < -50) p.x = W + 50;
+        if (p.x > W + 50) p.x = -50;
         const alpha = 0.2 + Math.sin(bg.t * 4 + p.phase) * 0.2;
         ctx.fillStyle = `rgba(255, 230, 180, ${alpha})`;
         ctx.beginPath();
@@ -1101,8 +1288,8 @@ body[data-view="settings"] .view-settings{display:flex}
         ctx.fill();
       }
       else if (bg.mode === 'bubbles') {
-        p.y -= 1 * p.speed * spd;
-        p.x += Math.sin(bg.t + p.phase) * 0.8 * spd;
+        p.y -= (1 * p.speed * spd) + p.vy;
+        p.x += Math.sin(bg.t + p.phase) * 0.8 * spd + p.vx;
         if (p.y < -50) { p.y = H + 50; p.x = Math.random() * W; }
         ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
         ctx.lineWidth = 1;
