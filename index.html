@@ -31,6 +31,9 @@ a{text-decoration:none;color:inherit;}
   position: fixed; inset: 0; z-index: 0;
   pointer-events: auto;
 }
+body[data-view="settings"] #bg-canvas {
+  pointer-events: none; /* Отключаем клики по фону в настройках для плавного скролла */
+}
 
 /* ===== Переключение экранов ===== */
 .view{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
@@ -43,6 +46,7 @@ body[data-view="settings"] .view-settings{display:flex}
 
 .view-settings {
   overflow-y: auto;
+  overscroll-behavior: contain;
   justify-content: flex-start;
   padding-top: 70px;
   padding-bottom: 60px;
@@ -411,6 +415,9 @@ body[data-view="settings"] .view-settings{display:flex}
   <div class="settings-section">
     <div class="settings-label">Что отгадывать</div>
     <div id="mode-list" class="mode-list"></div>
+    <div id="custom-images-inputs" class="custom-images-list" style="display:none;">
+      <!-- generated inputs -->
+    </div>
   </div>
   
   <div class="settings-section">
@@ -430,17 +437,6 @@ body[data-view="settings"] .view-settings{display:flex}
     <div class="sound-row">
       <span>Взаимодействие с фоном по клику</span>
       <button id="interact-toggle" class="toggle">вкл</button>
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <div class="settings-label">Свои изображения</div>
-    <div class="sound-row">
-      <span>Использовать свои изображения</span>
-      <button id="custom-images-toggle" class="toggle">выкл</button>
-    </div>
-    <div id="custom-images-inputs" class="custom-images-list" style="display:none;">
-      <!-- generated inputs -->
     </div>
   </div>
 
@@ -481,7 +477,7 @@ body[data-view="settings"] .view-settings{display:flex}
   };
   const MODE_LABELS = {
     colors:'Цвета', symbols:'Символы', digits:'Цифры',
-    letters:'Буквы', images:'Образы'
+    letters:'Буквы', images:'Образы', customImages: 'Свои картинки'
   };
   
   const BREATH_STAGES_ENERGY = [
@@ -518,7 +514,9 @@ body[data-view="settings"] .view-settings{display:flex}
     return a;
   };
   const isImageUrl = str => {
-    return str && (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:image'));
+    if (!str) return false;
+    str = str.trim().toLowerCase();
+    return str.startsWith('http') || str.startsWith('data:image');
   };
 
   /* ======================== ССЫЛКИ DOM ======================== */
@@ -529,7 +527,6 @@ body[data-view="settings"] .view-settings{display:flex}
   const bgToggle    = $('bg-toggle');
   const clickToggle = $('click-toggle');
   const interactToggle = $('interact-toggle');
-  const customImagesToggle = $('custom-images-toggle');
   const customImagesInputs = $('custom-images-inputs');
   const bCircle     = $('b-circle');
   const bProgress   = $('b-progress');
@@ -541,7 +538,7 @@ body[data-view="settings"] .view-settings{display:flex}
 
   /* ======================== СОСТОЯНИЕ ======================== */
   let game = {
-    enabledModes: Object.keys(POOLS),
+    enabledModes: ['colors', 'symbols', 'digits', 'letters', 'images'], // customImages off by default
     cards:2,
     rightCount:0, wrongCount:0,
     lastResults:[], cooldown:0,
@@ -549,14 +546,14 @@ body[data-view="settings"] .view-settings{display:flex}
     clickSoundOn:true,
     bgChangeOnCorrect:true,
     interactOnClick:true,
-    useCustomImages: false,
     customImages: ['', '', '', '', '', '', '', '', ''],
     skillStats: {
       colors: {wins: 0, total: 0},
       symbols: {wins: 0, total: 0},
       digits: {wins: 0, total: 0},
       letters: {wins: 0, total: 0},
-      images: {wins: 0, total: 0}
+      images: {wins: 0, total: 0},
+      customImages: {wins: 0, total: 0}
     }
   };
   const session = { active:false, correctIndex:-1, items:[], currentMode:'colors', abortId:0 };
@@ -574,12 +571,11 @@ body[data-view="settings"] .view-settings{display:flex}
         if(typeof s.clickSoundOn === 'boolean') game.clickSoundOn = s.clickSoundOn;
         if(typeof s.bgChangeOnCorrect === 'boolean') game.bgChangeOnCorrect = s.bgChangeOnCorrect;
         if(typeof s.interactOnClick === 'boolean') game.interactOnClick = s.interactOnClick;
-        if(typeof s.useCustomImages === 'boolean') game.useCustomImages = s.useCustomImages;
         if(Array.isArray(s.customImages)) game.customImages = s.customImages;
       }
     }catch(e){}
 
-    if (game.enabledModes.length === 0) game.enabledModes = Object.keys(POOLS);
+    if (game.enabledModes.length === 0) game.enabledModes = ['colors'];
 
     try{
       const d = JSON.parse(sessionStorage.getItem(SESSION_KEY));
@@ -606,7 +602,6 @@ body[data-view="settings"] .view-settings{display:flex}
         clickSoundOn: game.clickSoundOn,
         bgChangeOnCorrect: game.bgChangeOnCorrect,
         interactOnClick: game.interactOnClick,
-        useCustomImages: game.useCustomImages,
         customImages: game.customImages
       }));
     }catch(e){}
@@ -694,6 +689,12 @@ body[data-view="settings"] .view-settings{display:flex}
     bPhase.style.opacity = 1;
     bSub.style.opacity = 1;
 
+    // Force reset to full scale to avoid freezing
+    bCircle.style.transition = 'none';
+    bCircle.style.transform = 'scale(1)';
+    void bCircle.offsetWidth;
+    await sleep(50);
+
     const start = performance.now();
     const end = start + sec * 1000;
     
@@ -702,9 +703,9 @@ body[data-view="settings"] .view-settings{display:flex}
     bProgress.style.transition = 'none';
     bProgress.style.strokeDashoffset = startOffset;
 
-    let inhale = true;
-    let lastToggle = performance.now();
-    setScale(inhale ? 1 : .55, 4);
+    let inhale = false;
+    let lastToggle = performance.now() - 2000;
+    setScale(.55, 4); // start exhaling
 
     return new Promise(resolve => {
       function frame(now) {
@@ -793,15 +794,20 @@ body[data-view="settings"] .view-settings{display:flex}
     } 
     else if (stage.type === 'cycles') {
       bLevel.textContent = '';
+      const isCalmMode = stage.label === 'Медитация';
+      
       for (let i = 0; i < stage.cycles; i++) {
         if (id !== breathAbort) return;
-        await runCountdown('Глубокий вдох', 'Наполнитесь воздухом', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
+        await runCountdown('Глубокий вдох', isCalmMode ? '' : 'Наполнитесь воздухом', stage.inhale, id, (sec) => setScale(1, sec), 'fill');
         if (id !== breathAbort) return;
-        await runCountdown('Плавный выдох', 'Отпустите всё', stage.exhale, id, (sec) => setScale(.55, sec), 'drain');
+        await runCountdown('Плавный выдох', isCalmMode ? '' : 'Отпустите всё', stage.exhale, id, (sec) => setScale(.55, sec), 'drain');
       }
     } 
     else if (stage.type === 'hold_exhale') {
       bLevel.textContent = 'Задержка';
+      bCircle.style.transition = 'transform 0.5s ease-out';
+      bCircle.style.transform = 'scale(1)';
+      await sleep(500);
       await runCountdown('Плавный выдох', 'Подготовка к задержке', 4, id, (sec) => setScale(.55, sec), 'drain');
       if (id !== breathAbort) return;
       await runCountdown('Затаите дыхание', 'Не дышите', stage.duration, id, (sec) => setScale(.55, 0.5), 'fill');
@@ -919,7 +925,7 @@ body[data-view="settings"] .view-settings{display:flex}
       targetEl.style.background = item;
       targetEl.style.color = '#fff';
       targetEl.style.border = 'none';
-    } else if (mode === 'images' && isImageUrl(item)) {
+    } else if ((mode === 'images' || mode === 'customImages') && isImageUrl(item)) {
       targetEl.style.background = 'transparent';
       targetEl.style.border = 'none';
       targetEl.innerHTML = `<img src="${item}" alt="">`;
@@ -937,7 +943,7 @@ body[data-view="settings"] .view-settings{display:flex}
     if(mode === 'colors'){
       inner.style.background = item;
       inner.textContent = '';
-    } else if (mode === 'images' && isImageUrl(item)) {
+    } else if ((mode === 'images' || mode === 'customImages') && isImageUrl(item)) {
       inner.style.background = 'transparent';
       inner.innerHTML = `<img src="${item}" alt="">`;
     } else {
@@ -954,21 +960,28 @@ body[data-view="settings"] .view-settings{display:flex}
     targetEl.style.color = '#fff';
 
     let unlockedModes = ['colors'];
-    if (game.cards >= 3) unlockedModes.push('symbols');
+    if (game.cards >= 3) unlockedModes.push('symbols', 'customImages');
     if (game.cards >= 5) unlockedModes.push('digits');
     if (game.cards >= 7) unlockedModes.push('letters', 'images');
 
     let activeModes = unlockedModes.filter(m => game.enabledModes.includes(m));
-    if (activeModes.length === 0) activeModes = ['colors'];
+    if (activeModes.length === 0) {
+      activeModes = game.enabledModes.length > 0 ? [game.enabledModes[0]] : ['colors'];
+    }
 
     let totalWeight = 0;
     const weights = [];
     activeModes.forEach(m => {
-      const stat = game.skillStats[m];
-      const rating = stat.total > 0 ? (stat.wins / stat.total) * 100 : 50;
-      const w = rating + 20;
-      weights.push({ mode: m, w });
-      totalWeight += w;
+      if (m === 'customImages') {
+        weights.push({ mode: m, w: 50 });
+        totalWeight += 50;
+      } else {
+        const stat = game.skillStats[m];
+        const rating = stat.total > 0 ? (stat.wins / stat.total) * 100 : 50;
+        const w = rating + 20;
+        weights.push({ mode: m, w });
+        totalWeight += w;
+      }
     });
     
     let rand = Math.random() * totalWeight;
@@ -978,17 +991,20 @@ body[data-view="settings"] .view-settings{display:flex}
       if (rand <= 0) { selectedMode = item.mode; break; }
     }
 
-    session.currentMode = selectedMode;
-
-    let pool = POOLS[selectedMode].slice();
-    
-    // Custom images logic
-    if (selectedMode === 'images' && game.useCustomImages) {
-      const customPool = game.customImages.filter(url => url.trim() !== '');
-      if (customPool.length >= game.cards) {
-        pool = customPool;
+    let pool = [];
+    if (selectedMode === 'customImages') {
+      const validUrls = game.customImages.filter(url => isImageUrl(url));
+      if (validUrls.length >= game.cards) {
+        pool = validUrls;
+      } else {
+        selectedMode = 'images';
+        pool = POOLS.images.slice();
       }
+    } else {
+      pool = POOLS[selectedMode].slice();
     }
+
+    session.currentMode = selectedMode;
 
     shuffle(pool);
     const items = pool.slice(0, game.cards);
@@ -1040,31 +1056,33 @@ body[data-view="settings"] .view-settings{display:flex}
       playSuccess();
       playClick();
       
-      // Impulse for correct card (pushes particles)
-      const rect = card.getBoundingClientRect();
-      const cx = rect.left + rect.width/2;
-      const cy = rect.top + rect.height/2;
-      const r = rect.width/2;
-      
-      bg.particles.forEach(p => {
-        if (!p.isTemp) {
-          const dx = p.x - cx;
-          const dy = p.y - cy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < r + 100) {
-            const force = (r + 100 - dist) / (r + 100);
-            p.vx += (dx / (dist + 1)) * force * 15;
-            p.vy += (dy / (dist + 1)) * force * 15;
-          }
-        }
-      });
-      
       if (game.bgChangeOnCorrect) {
         const bgModes = ['wind', 'glints', 'stars', 'bubbles', 'aurora', 'leaves', 'fireflies', 'snow', 'ripples', 'galaxy', 'smoke', 'steam', 'fog'];
         bg.mode = bgModes[Math.floor(Math.random() * bgModes.length)];
         bg.intensity = 1 + ((game.cards - 2) / 7) * 3;
         initParticles();
       }
+
+      // Impulse for correct card (pushes particles after bg change)
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      const r = rect.width/2;
+      const impulseStrength = 8 + (game.cards * 3); // Scales with level
+      
+      bg.particles.forEach(p => {
+        if (!p.isTemp) {
+          const dx = p.x - cx;
+          const dy = p.y - cy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < r + 150) {
+            const force = (r + 150 - dist) / (r + 150);
+            p.vx += (dx / (dist + 1)) * force * impulseStrength;
+            p.vy += (dy / (dist + 1)) * force * impulseStrength;
+          }
+        }
+      });
+      
     } else {
       game.wrongCount++;
       card.classList.add('wrong');
@@ -1116,7 +1134,9 @@ body[data-view="settings"] .view-settings{display:flex}
   /* ======================== НАСТРОЙКИ ======================== */
   function renderSettings(){
     modeListEl.innerHTML = '';
-    Object.keys(POOLS).forEach(mode => {
+    const allModes = ['colors', 'symbols', 'digits', 'letters', 'images', 'customImages'];
+    
+    allModes.forEach(mode => {
       const isEnabled = game.enabledModes.includes(mode);
       
       const label = document.createElement('div');
@@ -1156,16 +1176,15 @@ body[data-view="settings"] .view-settings{display:flex}
     interactToggle.textContent = game.interactOnClick ? 'вкл' : 'выкл';
     interactToggle.classList.toggle('on', game.interactOnClick);
 
-    customImagesToggle.textContent = game.useCustomImages ? 'вкл' : 'выкл';
-    customImagesToggle.classList.toggle('on', game.useCustomImages);
-    
-    if (game.useCustomImages) {
+    // Custom Images inputs
+    const isCustomEnabled = game.enabledModes.includes('customImages');
+    if (isCustomEnabled) {
       customImagesInputs.style.display = 'flex';
       if (customImagesInputs.children.length === 0) {
         for (let i = 0; i < 9; i++) {
           const input = document.createElement('input');
           input.type = 'url';
-          input.placeholder = `Ссылка на картинку ${i+1}`;
+          input.placeholder = `Ссылка на картинку ${i+1} (.png, .jpg)`;
           input.value = game.customImages[i] || '';
           input.addEventListener('input', (e) => {
             game.customImages[i] = e.target.value;
@@ -1210,12 +1229,6 @@ body[data-view="settings"] .view-settings{display:flex}
 
   interactToggle.addEventListener('click', () => {
     game.interactOnClick = !game.interactOnClick;
-    saveSettings();
-    renderSettings();
-  });
-
-  customImagesToggle.addEventListener('click', () => {
-    game.useCustomImages = !game.useCustomImages;
     saveSettings();
     renderSettings();
   });
@@ -1276,7 +1289,7 @@ body[data-view="settings"] .view-settings{display:flex}
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (!game.interactOnClick) return;
+    if (!game.interactOnClick || currentView === 'settings') return;
     const cx = e.clientX;
     const cy = e.clientY;
 
@@ -1312,7 +1325,7 @@ body[data-view="settings"] .view-settings{display:flex}
     
     // Circle interaction (breathing)
     const rect = bCircle.getBoundingClientRect();
-    if (rect.width > 0) {
+    if (rect.width > 0 && currentView === 'breath') {
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const r = rect.width / 2;
