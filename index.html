@@ -424,19 +424,19 @@ body[data-view="settings"] .view-settings{display:flex}
     <div class="settings-label">Оформление и звук</div>
     <div class="sound-row">
       <span>Менять фон при верном ответе</span>
-      <button id="bg-toggle" class="toggle">вкл</button>
+      <button id="bg-toggle" class="toggle">включëн</button>
     </div>
     <div class="sound-row">
       <span>Мягкий звук при верном ответе</span>
-      <button id="sound-toggle" class="toggle">вкл</button>
+      <button id="sound-toggle" class="toggle">включëн</button>
     </div>
     <div class="sound-row">
-      <span>Тихий щелчок при ответе</span>
-      <button id="click-toggle" class="toggle">вкл</button>
+      <span>Тихий щелчок при верном ответе</span>
+      <button id="click-toggle" class="toggle">включëн</button>
     </div>
     <div class="sound-row">
-      <span>Взаимодействие с фоном по клику</span>
-      <button id="interact-toggle" class="toggle">вкл</button>
+      <span>Взаимодействие кликом с фоном</span>
+      <button id="interact-toggle" class="toggle">включëн</button>
     </div>
   </div>
 
@@ -1164,16 +1164,16 @@ body[data-view="settings"] .view-settings{display:flex}
       modeListEl.appendChild(label);
     });
 
-    soundToggle.textContent = game.soundOn ? 'вкл' : 'выкл';
+    soundToggle.textContent = game.soundOn ? 'включëн' : 'выключен';
     soundToggle.classList.toggle('on', game.soundOn);
     
-    clickToggle.textContent = game.clickSoundOn ? 'вкл' : 'выкл';
+    clickToggle.textContent = game.clickSoundOn ? 'включён' : 'выключен';
     clickToggle.classList.toggle('on', game.clickSoundOn);
 
-    bgToggle.textContent = game.bgChangeOnCorrect ? 'вкл' : 'выкл';
+    bgToggle.textContent = game.bgChangeOnCorrect ? 'включён' : 'выключен';
     bgToggle.classList.toggle('on', game.bgChangeOnCorrect);
 
-    interactToggle.textContent = game.interactOnClick ? 'вкл' : 'выкл';
+    interactToggle.textContent = game.interactOnClick ? 'включён' : 'выключен';
     interactToggle.classList.toggle('on', game.interactOnClick);
 
     // Custom Images inputs
@@ -1184,7 +1184,7 @@ body[data-view="settings"] .view-settings{display:flex}
         for (let i = 0; i < 9; i++) {
           const input = document.createElement('input');
           input.type = 'url';
-          input.placeholder = `Ссылка на картинку ${i+1} (.png, .jpg)`;
+          input.placeholder = `Ссылка на картинку ${i+1}`;
           input.value = game.customImages[i] || '';
           input.addEventListener('input', (e) => {
             game.customImages[i] = e.target.value;
